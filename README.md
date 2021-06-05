@@ -1,6 +1,8 @@
-# Beam 
+
 
 ![图片](./Image/logo.png)
+
+# Beam-ESP32
 
 ## 1. 工程目录说明
 
