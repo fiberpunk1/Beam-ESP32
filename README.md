@@ -85,7 +85,7 @@ stop_x和stop_y表示摄像头拍摄时，喷头暂停的位置，react_length�
 
 ## 4.Beam-API
 
-Beam对外提供了核心的API，来实现让更多的平台接入他进行控制。下面列举出Beam已经包含的API以及具体的使用。(编写一个API文档)
+Beam对外提供了核心的API，来实现让更多的平台接入他进行控制。下面列举出Beam已经包含的API以及具体的使用。[API文档](./FP-BeamAPI.md)
 
 ## 5.注意事项
 
