@@ -1,8 +1,12 @@
 
+<p align="center"><img src="./Image/logo.png" alt="FiberPunk's logo" /></p>
 
-![图片](./Image/logo.png)
+<h1 align="center">Beam-ESP32</h1>
+<p align="center">
+  <img src="https://img.shields.io/badge/arduino-opensource-brightgreen" alt="opensource"/>
+   <img src="https://img.shields.io/badge/hardware-lowcost-blue" alt="lowcost"/>
 
-# Beam-ESP32
+</p>
 
 ## 1. 工程目录说明
 
