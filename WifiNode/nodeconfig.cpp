@@ -2,8 +2,9 @@
 
 WebServer server(80);
 WiFiClient client;
+CRC8 gcrc;
 
-CMDFIFO cmd_fifo;
+GCODEFIFO cmd_fifo;
 CMDFIFO setting_fifo;
 
 File uploadFile;
@@ -26,14 +27,17 @@ File g_printfile;
 OP_STATUS g_status=P_IDEL;
 ERROR_CODE g_error=NORMAL;
 
-unsigned long sendGcode_cnt = 0;
-unsigned long recGok_cnt = 0;
+unsigned int sendGcode_cnt = 0;
+unsigned int recGok_cnt = 0;
 
 bool recv_ok = false;
 bool recvl_ok = false;
 bool hasSD = false;
+bool resend = false;
 
 
+unsigned long timecnt = 0;
+uint8_t cmd_length=0;
 
 NodeConfig::NodeConfig()
 {

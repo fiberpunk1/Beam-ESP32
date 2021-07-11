@@ -6,7 +6,6 @@
 #include "wifinode.h"
 #include "nodeconfig.h"
 
-
 String readConfig(File& file)
 {
   String ret="";
@@ -51,7 +50,9 @@ void WifiNode::init()
     // esp_task_wdt_init(3, false);
 
     //0.初始化串口
-    DBG_OUTPUT_PORT.begin(115200);
+    DBG_OUTPUT_PORT.begin(100000);
+    DBG_OUTPUT_PORT.setTimeout(120);
+    DBG_OUTPUT_PORT.setRxBufferSize(512);
     DBG_OUTPUT_PORT.setDebugOutput(true);
     DBG_OUTPUT_PORT.print("\n");
 
@@ -64,7 +65,7 @@ void WifiNode::init()
     digitalWrite(BLUE_LED, HIGH);
 
     //1.初始化SD
-    while(!SD.begin(SS))
+    while(!SD_MMC.begin())
     {
         digitalWrite(RED_LED, LOW);
         digitalWrite(GREEN_LED, HIGH);
@@ -80,13 +81,19 @@ void WifiNode::init()
     digitalWrite(RED_LED, HIGH);
     digitalWrite(GREEN_LED, HIGH);
     digitalWrite(BLUE_LED, HIGH);
+    uint8_t cardType = SD_MMC.cardType();
+
+    if(cardType == CARD_NONE){
+        Serial.println("No SD_MMC card attached");
+        return;
+    }
     DBG_OUTPUT_PORT.println("SD Card initialized.");
     hasSD = true;
    
     //2.初始化wifi
     initwifi:
     //读取wifi账号密码，还有打印机名字
-    File config_file = SD.open("/config.txt",FILE_READ);
+    File config_file = SD_MMC.open("/config.txt",FILE_READ);
 
     if(config_file)
     {
@@ -130,6 +137,7 @@ void WifiNode::init()
     WiFi.setAutoConnect(false);
 
     WiFi.begin((const char*)cf_ssid.c_str(), (const char*)cf_password.c_str());
+
     uint8_t i = 0;
     while (WiFi.status() != WL_CONNECTED && i++ < 20) 
     {
@@ -156,7 +164,9 @@ void WifiNode::init()
     digitalWrite(BLUE_LED, HIGH);
     //3. server init
     serverprocesser.serverInit();
-    
+
+    //4. crc init
+    gcrc.begin();
 }
 
 void WifiNode::process()

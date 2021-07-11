@@ -35,11 +35,11 @@ void handleFileUpload()
   HTTPUpload& upload = server.upload();
   if (upload.status == UPLOAD_FILE_START) 
   {
-    if (SD.exists((char *)upload.filename.c_str())) 
+    if (SD_MMC.exists((char *)upload.filename.c_str())) 
     {
-      SD.remove((char *)upload.filename.c_str());
+      SD_MMC.remove((char *)upload.filename.c_str());
     }
-    uploadFile = SD.open(upload.filename.c_str(), FILE_WRITE);
+    uploadFile = SD_MMC.open(upload.filename.c_str(), FILE_WRITE);
     DBG_OUTPUT_PORT.print("Upload: START, filename: "); DBG_OUTPUT_PORT.println(upload.filename);
   } 
   else if (upload.status == UPLOAD_FILE_WRITE) 
@@ -61,11 +61,11 @@ void handleFileUpload()
 
 void deleteRecursive(String path) 
 {
-  File file = SD.open((char *)path.c_str());
+  File file = SD_MMC.open((char *)path.c_str());
   if (!file.isDirectory()) 
   {
     file.close();
-    SD.remove((char *)path.c_str());
+    SD_MMC.remove((char *)path.c_str());
     return;
   }
 
@@ -85,12 +85,12 @@ void deleteRecursive(String path)
     } else 
     {
       entry.close();
-      SD.remove((char *)entryPath.c_str());
+      SD_MMC.remove((char *)entryPath.c_str());
     }
     yield();
   }
 
-  SD.rmdir((char *)path.c_str());
+  SD_MMC.rmdir((char *)path.c_str());
   file.close();
 }
 
@@ -103,7 +103,7 @@ void handleDelete()
   // String path = server.arg(0);
   String path = server.arg("path");
   DBG_OUTPUT_PORT.print(path);
-  if (path == "/" || !SD.exists((char *)path.c_str())) 
+  if (path == "/" || !SD_MMC.exists((char *)path.c_str())) 
   {
     returnFail("BAD PATH");
     return;
@@ -118,14 +118,14 @@ void handleCreate() {
     return returnFail("BAD ARGS");
   }
   String path = server.arg(0);
-  if (path == "/" || SD.exists((char *)path.c_str())) 
+  if (path == "/" || SD_MMC.exists((char *)path.c_str())) 
   {
     returnFail("BAD PATH");
     return;
   }
 
   if (path.indexOf('.') > 0) {
-    File file = SD.open((char *)path.c_str(), FILE_WRITE);
+    File file = SD_MMC.open((char *)path.c_str(), FILE_WRITE);
     if (file) 
     {
       file.write(0);
@@ -134,7 +134,7 @@ void handleCreate() {
   } 
   else 
   {
-    SD.mkdir((char *)path.c_str());
+    SD_MMC.mkdir((char *)path.c_str());
   }
   returnOK();
 }
@@ -146,11 +146,11 @@ void printDirectory()
     return returnFail("BAD ARGS");
   }
   String path = server.arg("dir");
-  if (path != "/" && !SD.exists((char *)path.c_str())) 
+  if (path != "/" && !SD_MMC.exists((char *)path.c_str())) 
   {
     return returnFail("BAD PATH");
   }
-  File dir = SD.open((char *)path.c_str());
+  File dir = SD_MMC.open((char *)path.c_str());
   path = String();
   if (!dir.isDirectory()) 
   {
@@ -173,7 +173,7 @@ void printDirectory()
 
     String output;
     if(cnt > 0)
-     {
+    {
       output = ',';
     }
 
@@ -220,6 +220,11 @@ void reportDevice()
   }
   server.send(200, "text/plain",ip);
 }
+void reportVersion()
+{
+  String version = String(VERSION);
+  server.send(200, "text/plain",version);
+}
 void printerStatus()
 {
   String result = total_layers+","+current_layers+","+current_temp; 
@@ -254,7 +259,7 @@ void printerControl()
     if(g_status == PAUSE)
     {
       g_status = PRINTING;
-      PRINTER_PORT.print("G4 S1\n");
+      PRINTER_PORT.print("G4 S1.0\n");
     }
 
   }
@@ -268,7 +273,7 @@ void getPCAddress()
         return returnFail("BAD ARGS");
     }
     pc_ipaddress = server.arg("ip");
-    DBG_OUTPUT_PORT.print(pc_ipaddress);
+    //DBG_OUTPUT_PORT.print(pc_ipaddress);
 
     if (!client.connect(pc_ipaddress.c_str(), 1688)) 
     {
@@ -278,6 +283,29 @@ void getPCAddress()
 
     returnOK();
 }
+// send out the cmd package, not just cmd
+void sendCmdByPackage(String cmd)
+{
+
+    cmd_length = cmd.length();
+    uint8_t package[cmd_length+4];
+    
+    char str_buf[cmd_length];
+    
+    memset(package, ' ', cmd_length+4);  //fill the package with space char
+
+    package[0] = 0xff;         //package head
+    package[1] = cmd_length;
+    cmd.toCharArray(str_buf, cmd_length);
+    memcpy(&package[2], str_buf, cmd_length);
+    package[cmd_length+1] = 0x0a;
+    package[cmd_length+2] = gcrc.get_crc8((uint8_t const*)(package+2), cmd_length);  //input the crc data
+    package[cmd_length+3] = 0xfd; //package tail
+    
+    //String sendgc((char*)package);
+    PRINTER_PORT.write(package,cmd_length+4);
+    //PRINTER_PORT.print(sendgc);
+}
 
 void sendGcode()
 {
@@ -286,7 +314,7 @@ void sendGcode()
         return returnFail("BAD ARGS");
     }
     String op = server.arg("gc")+"\n";
-    DBG_OUTPUT_PORT.print(op);
+    sendCmdByPackage(op);
     returnOK();
 }
 
@@ -297,11 +325,11 @@ void printStart()
     return returnFail("BAD ARGS");
   }
   String path = server.arg("filename");
-  if (path != "/" && !SD.exists((char *)path.c_str())) 
+  if (path != "/" && !SD_MMC.exists((char *)path.c_str())) 
   {
     return returnFail("BAD PATH");
   }
-  PRINTER_PORT.print("G4 S1\n");
+  sendCmdByPackage("G4 S1.0\n");
   delay(1000);
   printFile(path);
   returnOK();
@@ -331,6 +359,7 @@ void ServerProcess::serverInit()
     }
 
     server.on("/find", HTTP_GET, reportDevice);
+    server.on("/version", HTTP_GET, reportVersion);
     server.on("/gcode", HTTP_GET, sendGcode);
     server.on("/pcsocket", HTTP_GET, getPCAddress);
 
@@ -355,6 +384,8 @@ void ServerProcess::serverInit()
 
 }
 
+
+
 void sendPrintCmd()
 {
     if(g_status==PRINTING)
@@ -365,23 +396,39 @@ void sendPrintCmd()
         {
             String send_line = cmd_fifo.pop();
             pre_line = send_line;
-            if(send_line=="end")
+            if(send_line.indexOf("&")!=-1)
             {
               g_status=P_IDEL;
               if(g_printfile)
                 g_printfile.close();
               DBG_OUTPUT_PORT.print("Print finish!!!");
+              String capture_cmd = "Beam-"+cf_node_name+"-Finish";
+              client.print(capture_cmd);
               client.stop();
+              recv_ok = false;
+              recvl_ok = false;
               sendGcode_cnt=0;
               recGok_cnt = 0;
+              cmd_fifo.clear();
+              setting_fifo.clear();
             }
             else
             {
-              PRINTER_PORT.print(send_line);
+              sendCmdByPackage(send_line);
             }
             recv_ok = false;
             recvl_ok = false;
         }
+      }
+      if (timecnt>1000)
+      {
+        sendCmdByPackage(pre_line);
+        timecnt = 0;
+      }
+      if (resend == true)
+      {
+        sendCmdByPackage(pre_line);
+        resend = false;
       }
        
     }
@@ -397,26 +444,33 @@ void sendPrintCmd()
       g_status = P_IDEL;
       recv_ok = false;
       recvl_ok = false;
+      cmd_fifo.clear();
+      setting_fifo.clear();
     }
 }
 
 
 void readLineFromFile()
 {
-  if(g_printfile && (g_status==PRINTING) && cmd_fifo.size()<FIFO_SIZE)
+  if(g_printfile && (g_status==PRINTING) && cmd_fifo.size()<GCODE_FIFO_SIZE)
   {
     if(b_time_laspe && setting_fifo.size()>0)
     {
-      String setting_cmd = setting_fifo.pop();
-      cmd_fifo.push(setting_cmd);
-      return;
+        String setting_cmd = setting_fifo.pop();
+        cmd_fifo.push(setting_cmd);
+        return;
     }
     //1. 读取一行Gcode, 如果是注释行则跳过
     String line = readLine(g_printfile);
-
+    if(line.indexOf("&")!=-1)
+    {
+      cmd_fifo.push(line);
+      return;
+    }
+      
     while(line.startsWith(";")||(line.length()<=1))
     {
-      if(line.indexOf("_COUNT:")!=-1)
+      if((line.indexOf("_COUNT:")!=-1) || (line.indexOf("count:")!=-1))
       {
         total_layers = line;
 
@@ -429,10 +483,10 @@ void readLineFromFile()
           //move to the side, and delay 2 seconds, to make time 
           String relative_mode = "G91 \n";
           String absolute_mode = "G90 \n";
-          String e_react = "G1 E-"+String(react_length/2)+"\n";
-          String e_exrude = "G1 E"+String(react_length)+"\n";
+          String e_react = "G1 E-"+String(react_length)+"\n";
+          String e_exrude = "G1 E"+String(react_length/4)+"\n";
           String stop_up = "G0 F4500 X"+ String(stop_x)+" Y"+String(stop_y)+"\n";
-          String capture_time = "G4 S1\n";
+          String capture_time = "G4 S2\n";
           String capture_flag = "M114\n";
           String z_up = "G0 Z2 \n";
           String z_down = "G0 Z-2 \n";
@@ -464,9 +518,10 @@ void readLineFromFile()
       String CMD_M105 = "M105\n";
       setting_fifo.push(CMD_M105);
     }
-    if ((sendGcode_cnt >= 200) && (sendGcode_cnt % 200 == 0))
+    if ((sendGcode_cnt >= 250))
     {
       String CMD_M105 = "M105\n";
+      sendGcode_cnt = 0;
       setting_fifo.push(CMD_M105);
     }   
   }

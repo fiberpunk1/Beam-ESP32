@@ -3,7 +3,7 @@
 
 #include "Arduino.h"
 
-#define FIFO_SIZE 32
+#define FIFO_SIZE 24
 
 class CMDFIFO 
 {
@@ -11,7 +11,7 @@ class CMDFIFO
     int head;
     int tail;
     int numElements;
-    char buffer[FIFO_SIZE][96];
+    char buffer[FIFO_SIZE][48];
   public:
     CMDFIFO();
     ~CMDFIFO();

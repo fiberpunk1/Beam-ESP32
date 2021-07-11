@@ -18,21 +18,20 @@ String readLine(File& file)
     int tmp = ret.indexOf(";");
     if(tmp!=-1)
     {
-        if(tmp==0)
+        if(tmp<=2)
         {
           return ret;  
         }
         else if(tmp>2)
         {
+          if(tmp>48)
+            tmp = 48; //Prevent the string being too long
           ret = ret.substring(0, tmp);
-        }
-        else if(tmp<=2)
-        {
-          ret = "";
-          return ret;  
+          return ret;
         }
         
     }
+
     if (ret.length() < 2)
     {
       ret = "";
@@ -44,7 +43,7 @@ String readLine(File& file)
   }
   else
   {
-    ret="end";
+    ret="&&&";
   }
   
   return ret;
@@ -55,7 +54,7 @@ void printFile(String filename)
     if(g_status==P_IDEL)
     {
       //只有IDLE状态下才可以进行打印
-      g_printfile = SD.open(filename,FILE_READ);
+      g_printfile = SD_MMC.open(filename,FILE_READ);
       if(g_printfile)
       {
         g_status = PRINTING;
@@ -100,20 +99,28 @@ void readPrinterBack()
   {
     if(inData.length()>=2)
     {
+      //在整行中检测收到ok的情况
+      if(inData.indexOf("resend")!=-1)
+      {
+        resend = true;
+      }      
       //check temp
       if (inData.indexOf("T:")!=-1)
       {
         current_temp = inData;
+        timecnt = 0;
       }
       else if(inData.indexOf("B:")!=-1)
       {
         current_bed_temp = inData;
+        timecnt = 0;
       }
 
       //在整行中检测收到ok的情况
       if(inData.indexOf("ok")!=-1)
       {
         recv_ok = true;
+        timecnt = 0;
         recGok_cnt++;
       }
       else
@@ -128,6 +135,7 @@ void readPrinterBack()
         {
           String capture_cmd = "Camera-"+cf_node_name+"-TakeImg";
           client.print(capture_cmd);
+          timecnt = 0;
         }   
       }
       inData="";
@@ -151,7 +159,8 @@ void printLoop(void * parameter)
   for(;;)
   {
     readPrinterBack();
-    vTaskDelay(5);
+    vTaskDelay(10);
+    timecnt++;  
   }
 }
 

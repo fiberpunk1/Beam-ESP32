@@ -7,10 +7,15 @@
 #include <WebServer.h>
 #include <SPI.h>
 #include <Arduino.h>
-#include <SD.h>
+#include <SD_MMC.h>
+#include <FS.h>
 
 #include "cmdfifo.h"
+#include "gcodefifo.h"
+#include "crc8.h"
 
+
+#define VERSION 1001
 #define DBG_OUTPUT_PORT Serial
 #define PRINTER_PORT Serial
 #define RED_LED 27
@@ -33,10 +38,11 @@ enum ERROR_CODE
   OPEN_FAILED=1,
 };
 
-extern CMDFIFO cmd_fifo;
+extern GCODEFIFO cmd_fifo;
 extern CMDFIFO setting_fifo;
 extern WebServer server;
 extern WiFiClient client;
+extern CRC8 gcrc;
 
 extern File uploadFile;
 extern File g_printfile;
@@ -61,19 +67,19 @@ extern float react_length;
 extern OP_STATUS g_status;
 extern ERROR_CODE g_error;
 
+extern unsigned long timecnt;
+extern bool time_out;
+
 
 extern bool hasSD;
 extern bool recv_ok;
 extern bool recvl_ok;
+extern bool resend;
 
+extern unsigned int sendGcode_cnt;
+extern unsigned int recGok_cnt;
 
-extern unsigned long sendGcode_cnt;
-extern unsigned long recGok_cnt;
-
-
-extern unsigned long sendGcode_cnt;
-extern unsigned long recGok_cnt;
-
+extern uint8_t cmd_length;
 
 class NodeConfig
 {
