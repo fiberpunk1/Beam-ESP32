@@ -13,7 +13,7 @@ void CRC8::begin(void) {
 
     for (int dividend = 0; dividend < 256; ++dividend)
     {
-        remainder = dividend << (WIDTH - 8);
+        remainder = dividend << (WIDTH_CRC - 8);
 
         
         for (uint8_t bit = 8; bit > 0; --bit)
@@ -38,7 +38,7 @@ crc CRC8::get_crc8(uint8_t const message[], int nBytes) {
     crc remainder = 0;
     for (int byte = 0; byte < nBytes; ++byte)
     {
-        data = message[byte] ^ (remainder >> (WIDTH - 8));
+        data = message[byte] ^ (remainder >> (WIDTH_CRC - 8));
         remainder = crcTable[data] ^ (remainder << 8);
     }
 

@@ -12,8 +12,8 @@
 
 	typedef uint8_t crc;
 	#define POLYNOMIAL 0x07  /* CRC8_CCITT -- this polynomial needs to match choice on javascript end */
-	#define WIDTH  (8 * sizeof(crc))
-	#define TOPBIT (1 << (WIDTH - 1))
+	#define WIDTH_CRC  (8 * sizeof(crc))
+	#define TOPBIT (1 << (WIDTH_CRC - 1))
 
 	class CRC8 {
 	  public:

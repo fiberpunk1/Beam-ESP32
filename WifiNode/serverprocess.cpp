@@ -40,7 +40,7 @@ void handleFileUpload()
       SD_MMC.remove((char *)upload.filename.c_str());
     }
     uploadFile = SD_MMC.open(upload.filename.c_str(), FILE_WRITE);
-    DBG_OUTPUT_PORT.print("Upload: START, filename: "); DBG_OUTPUT_PORT.println(upload.filename);
+    // DBG_OUTPUT_PORT.print("Upload: START, filename: "); DBG_OUTPUT_PORT.println(upload.filename);
   } 
   else if (upload.status == UPLOAD_FILE_WRITE) 
   {
@@ -48,14 +48,14 @@ void handleFileUpload()
     {
       uploadFile.write(upload.buf, upload.currentSize);
     }
-    DBG_OUTPUT_PORT.print("Upload: WRITE, Bytes: "); DBG_OUTPUT_PORT.println(upload.currentSize);
+    // DBG_OUTPUT_PORT.print("Upload: WRITE, Bytes: "); DBG_OUTPUT_PORT.println(upload.currentSize);
   } else if (upload.status == UPLOAD_FILE_END) 
   {
     if (uploadFile) 
     {
       uploadFile.close();
     }
-    DBG_OUTPUT_PORT.print("Upload: END, Size: "); DBG_OUTPUT_PORT.println(upload.totalSize);
+    // DBG_OUTPUT_PORT.print("Upload: END, Size: "); DBG_OUTPUT_PORT.println(upload.totalSize);
   }
 }
 
@@ -102,7 +102,7 @@ void handleDelete()
   }
   // String path = server.arg(0);
   String path = server.arg("path");
-  DBG_OUTPUT_PORT.print(path);
+  // DBG_OUTPUT_PORT.print(path);
   if (path == "/" || !SD_MMC.exists((char *)path.c_str())) 
   {
     returnFail("BAD PATH");
@@ -209,7 +209,7 @@ void handleNotFound()
     message += " NAME:" + server.argName(i) + "\n VALUE:" + server.arg(i) + "\n";
   }
   server.send(404, "text/plain", message);
-  DBG_OUTPUT_PORT.print(message);
+  // DBG_OUTPUT_PORT.print(message);
 }
 void reportDevice()
 {
@@ -305,6 +305,7 @@ void sendCmdByPackage(String cmd)
     //String sendgc((char*)package);
     PRINTER_PORT.write(package,cmd_length+4);
     //PRINTER_PORT.print(sendgc);
+    PRINTER_PORT.flush();
 }
 
 void sendGcode()
@@ -352,10 +353,10 @@ void ServerProcess::serverInit()
     if (MDNS.begin(host)) 
     {
         MDNS.addService("http", "tcp", 80);
-        DBG_OUTPUT_PORT.println("MDNS responder started");
-        DBG_OUTPUT_PORT.print("You can now connect to http://");
-        DBG_OUTPUT_PORT.print(host);
-        DBG_OUTPUT_PORT.println(".local");
+        // DBG_OUTPUT_PORT.println("MDNS responder started");
+        // DBG_OUTPUT_PORT.print("You can now connect to http://");
+        // DBG_OUTPUT_PORT.print(host);
+        // DBG_OUTPUT_PORT.println(".local");
     }
 
     server.on("/find", HTTP_GET, reportDevice);
@@ -380,7 +381,7 @@ void ServerProcess::serverInit()
 
   server.begin();
 
-  DBG_OUTPUT_PORT.println("HTTP server started");
+  // DBG_OUTPUT_PORT.println("HTTP server started");
 
 }
 
@@ -401,7 +402,7 @@ void sendPrintCmd()
               g_status=P_IDEL;
               if(g_printfile)
                 g_printfile.close();
-              DBG_OUTPUT_PORT.print("Print finish!!!");
+              // DBG_OUTPUT_PORT.print("Print finish!!!");
               String capture_cmd = "Beam-"+cf_node_name+"-Finish";
               client.print(capture_cmd);
               client.stop();
@@ -454,7 +455,7 @@ void readLineFromFile()
 {
   if(g_printfile && (g_status==PRINTING) && cmd_fifo.size()<GCODE_FIFO_SIZE)
   {
-    if(b_time_laspe && setting_fifo.size()>0)
+    if(setting_fifo.size()>0)
     {
         String setting_cmd = setting_fifo.pop();
         cmd_fifo.push(setting_cmd);
@@ -478,33 +479,34 @@ void readLineFromFile()
       if(line.indexOf("LAYER:")!=-1)
       {
         current_layers = line;
-        if(b_time_laspe)
-        {
-          //move to the side, and delay 2 seconds, to make time 
-          String relative_mode = "G91 \n";
-          String absolute_mode = "G90 \n";
-          String e_react = "G1 E-"+String(react_length)+"\n";
-          String e_exrude = "G1 E"+String(react_length/4)+"\n";
-          String stop_up = "G0 F4500 X"+ String(stop_x)+" Y"+String(stop_y)+"\n";
-          String capture_time = "G4 S2\n";
-          String capture_flag = "M114\n";
-          String z_up = "G0 Z2 \n";
-          String z_down = "G0 Z-2 \n";
+        // if(b_time_laspe)
+        // {
+        //   //move to the side, and delay 2 seconds, to make time 
+        //   String relative_mode = "G91 \n";
+        //   String absolute_mode = "G90 \n";
+        //   String e_react = "G1 E-"+String(react_length)+"\n";
+        //   String e_exrude = "G1 E"+String(react_length/4)+"\n";
+        //   String stop_up = "G0 F4500 X"+ String(stop_x)+" Y"+String(stop_y)+"\n";
+        //   String capture_time = "G4 S2.0\n";
+        //   String capture_flag = "M114\n";
+        //   String z_up = "G0 Z2.0 \n";
+        //   String z_down = "G0 Z-2 \n";
 
-          setting_fifo.push(relative_mode);
-          setting_fifo.push(e_react);
-          setting_fifo.push(z_up);
-          setting_fifo.push(absolute_mode);
+        //   setting_fifo.push(relative_mode);
+        //   setting_fifo.push(e_react);
+        //   setting_fifo.push(z_up);
+        //   setting_fifo.push(absolute_mode);
 
-          setting_fifo.push(stop_up);
-          setting_fifo.push(capture_flag);
-          setting_fifo.push(capture_time);
+        //   setting_fifo.push(stop_up);
+        //   setting_fifo.push(capture_time);
+        //   setting_fifo.push(capture_flag);
+          
 
-          setting_fifo.push(relative_mode);
-          setting_fifo.push(z_down);
-          setting_fifo.push(e_exrude);
-          setting_fifo.push(absolute_mode);
-        }
+        //   setting_fifo.push(relative_mode);
+        //   setting_fifo.push(z_down);
+        //   // setting_fifo.push(e_exrude);
+        //   setting_fifo.push(absolute_mode);
+        // }
 
       }
       line = readLine(g_printfile);

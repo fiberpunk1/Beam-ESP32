@@ -129,7 +129,7 @@ void readPrinterBack()
         recvl_ok = false;
       }
 
-      if(b_time_laspe)
+      // if(b_time_laspe)
       {
         if(inData.indexOf("X:")!=-1)
         {
