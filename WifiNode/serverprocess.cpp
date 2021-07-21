@@ -249,10 +249,17 @@ void printerControl()
   else if(op=="CANCLE")
   {
     g_status = CANCLE;
-    cmd_fifo.clear();
     g_status = P_IDEL;
-    g_printfile.close();
+    if(g_printfile)
+      g_printfile.close();
+      
     client.stop();
+    recv_ok = false;
+    recvl_ok = false;
+    sendGcode_cnt=0;
+    recGok_cnt = 0;
+    cmd_fifo.clear();
+    setting_fifo.clear();
   }
   else if(op=="RECOVER")
   {
@@ -315,7 +322,20 @@ void sendGcode()
         return returnFail("BAD ARGS");
     }
     String op = server.arg("gc")+"\n";
-    sendCmdByPackage(op);
+    if(op.startsWith("G"))
+    {
+      sendCmdByPackage("G91\n");
+      delay(50);
+      sendCmdByPackage(op); 
+      delay(50);
+      sendCmdByPackage("G90\n");
+    }
+    else
+    {
+      sendCmdByPackage(op);  
+    }
+    
+    
     returnOK();
 }
 
