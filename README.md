@@ -70,7 +70,9 @@ b_time_laspe:1
 stop_x and stop_y represents the position where the nozzle is paused when the camera is shooting, and react_length is the distance that the nozzle needs to withdraw when it moves to a fixed position before the camera is shooting.
 
 >Note 1: The setting parameters after the above colon must not have spaces.
+
 >Note 2: After the last line, there must be a line break.
+
 >Note 3: The config.txt file must be present, otherwise the Beam will not work normally.
 
 
