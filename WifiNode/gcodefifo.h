@@ -3,7 +3,7 @@
 
 #include "Arduino.h"
 
-#define GCODE_FIFO_SIZE 1024
+#define GCODE_FIFO_SIZE 512
 
 class GCODEFIFO 
 {
@@ -11,7 +11,7 @@ class GCODEFIFO
     int head;
     int tail;
     int numElements;
-    char buffer[GCODE_FIFO_SIZE][48];
+    char buffer[GCODE_FIFO_SIZE][64];
 //    char **buffer;
   public:
     GCODEFIFO();

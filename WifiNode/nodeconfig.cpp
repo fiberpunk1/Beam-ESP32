@@ -1,7 +1,8 @@
 #include "nodeconfig.h"
 
 WebServer server(80);
-WiFiClient client;
+HTTPClient http_client;
+// WiFiClient socket_client;
 CRC8 gcrc;
 
 GCODEFIFO cmd_fifo;
@@ -34,11 +35,38 @@ bool recv_ok = false;
 bool recvl_ok = false;
 bool hasSD = false;
 bool resend = false;
+bool rst_usb = false;
+
+unsigned char current_usb_status = 0;
+unsigned char pre_usb_status = 0;
 
 
 unsigned long timecnt = 0;
 uint8_t cmd_length=0;
 
+
+void sendHttpMsg(String);
+
+void sendHttpMsg(String url)
+{
+#if 1
+    String http_url = "http://"+pc_ipaddress+":8002/"+"api/"+url;
+    http_client.begin(http_url);
+    int httpRsponCode = http_client.POST(http_url);
+    // Serial.print(http_url);
+    if(httpRsponCode>0)
+    {
+        //message send succesful
+    }
+    else
+    {
+        //send failed
+        
+    }
+#endif
+    // socket_client.print(url);
+    
+}
 NodeConfig::NodeConfig()
 {
 

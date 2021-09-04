@@ -6,8 +6,6 @@
 extern void printFile(String file);
 extern void printLoop(void * parameter);
 
-
-
 class PrinterProcess
 {
 public:

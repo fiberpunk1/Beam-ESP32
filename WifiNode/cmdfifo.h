@@ -11,7 +11,7 @@ class CMDFIFO
     int head;
     int tail;
     int numElements;
-    char buffer[FIFO_SIZE][48];
+    char buffer[FIFO_SIZE][64];
   public:
     CMDFIFO();
     ~CMDFIFO();

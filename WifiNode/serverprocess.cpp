@@ -24,8 +24,6 @@ bool loadFromSdCard(String path)
 }
 
 
-
-
 void handleFileUpload() 
 {
   if (server.uri() != "/edit") 
@@ -232,64 +230,6 @@ void printerStatus()
   server.send(200, "text/plain",result);
 }
 
-void printerControl()
-{
-  if (!server.hasArg("op")) 
-  {
-    return returnFail("BAD ARGS");
-  }
-  String op = server.arg("op");
-
-  if(op=="PAUSE")
-  {
-    g_status = PAUSE;
-    //just for test
-    client.print("TakeImg");
-  }
-  else if(op=="CANCLE")
-  {
-    g_status = CANCLE;
-    g_status = P_IDEL;
-    if(g_printfile)
-      g_printfile.close();
-      
-    client.stop();
-    recv_ok = false;
-    recvl_ok = false;
-    sendGcode_cnt=0;
-    recGok_cnt = 0;
-    cmd_fifo.clear();
-    setting_fifo.clear();
-  }
-  else if(op=="RECOVER")
-  {
-    if(g_status == PAUSE)
-    {
-      g_status = PRINTING;
-      PRINTER_PORT.print("G4 S1.0\n");
-    }
-
-  }
-  returnOK();
-}
-
-void getPCAddress()
-{
-    if (!server.hasArg("ip")) 
-    {
-        return returnFail("BAD ARGS");
-    }
-    pc_ipaddress = server.arg("ip");
-    //DBG_OUTPUT_PORT.print(pc_ipaddress);
-
-    if (!client.connect(pc_ipaddress.c_str(), 1688)) 
-    {
-        Serial.println("connection pc socket failed");
-        return returnFail("Connect PC failed!");
-    }
-
-    returnOK();
-}
 // send out the cmd package, not just cmd
 void sendCmdByPackage(String cmd)
 {
@@ -315,6 +255,84 @@ void sendCmdByPackage(String cmd)
     PRINTER_PORT.flush();
 }
 
+void resetUSBHost()
+{
+  digitalWrite(5, HIGH);
+  delay(50);
+  digitalWrite(5, LOW);
+  delay(500);
+  digitalWrite(5, HIGH);
+  returnOK();
+}
+
+void printerControl()
+{
+  if (!server.hasArg("op")) 
+  {
+    return returnFail("BAD ARGS");
+  }
+  String op = server.arg("op");
+
+  if(op=="PAUSE")
+  {
+    g_status = PAUSE;
+
+  }
+  else if(op=="CANCLE")
+  {
+    g_status = CANCLE;
+    g_status = P_IDEL;
+    if(g_printfile)
+      g_printfile.close();
+      
+    recv_ok = false;
+    recvl_ok = false;
+    sendGcode_cnt=0;
+    recGok_cnt = 0;
+    cmd_fifo.clear();
+    setting_fifo.clear();
+
+    //reset ch554
+    delay(1000);
+    digitalWrite(5, LOW);
+    delay(500);
+    digitalWrite(5, HIGH);
+
+    //test http send
+    sendHttpMsg("Beam-ShellVersion-Finish");
+    // socket_client.stop();
+    current_bed_temp = "";
+    current_layers = "";
+    current_temp = "";
+  }
+  else if(op=="RECOVER")
+  {
+    if(g_status == PAUSE)
+    {
+      g_status = PRINTING;
+      PRINTER_PORT.print("G4 S1.0\n");
+    }
+
+  }
+  returnOK();
+}
+
+void getPCAddress()
+{
+    if (!server.hasArg("ip")) 
+    {
+        return returnFail("BAD ARGS");
+    }
+    pc_ipaddress = server.arg("ip");
+    // if (!socket_client.connect(pc_ipaddress.c_str(), 1688)) 
+    // {
+    //     return returnFail("Connect PC failed!");
+    // }
+
+    returnOK();
+}
+
+
 void sendGcode()
 {
     if (!server.hasArg("gc")) 
@@ -322,19 +340,18 @@ void sendGcode()
         return returnFail("BAD ARGS");
     }
     String op = server.arg("gc")+"\n";
-    if(op.startsWith("G"))
+    if(op.startsWith("G0"))
     {
       sendCmdByPackage("G91\n");
-      delay(50);
+      delay(100);
       sendCmdByPackage(op); 
-      delay(50);
+      delay(100);
       sendCmdByPackage("G90\n");
     }
     else
     {
       sendCmdByPackage(op);  
     }
-    
     
     returnOK();
 }
@@ -372,7 +389,7 @@ void ServerProcess::serverInit()
 
     if (MDNS.begin(host)) 
     {
-        MDNS.addService("http", "tcp", 80);
+        MDNS.addService("fiberpunk", "tcp", 23);
         // DBG_OUTPUT_PORT.println("MDNS responder started");
         // DBG_OUTPUT_PORT.print("You can now connect to http://");
         // DBG_OUTPUT_PORT.print(host);
@@ -383,6 +400,7 @@ void ServerProcess::serverInit()
     server.on("/version", HTTP_GET, reportVersion);
     server.on("/gcode", HTTP_GET, sendGcode);
     server.on("/pcsocket", HTTP_GET, getPCAddress);
+    server.on("/resetusb",HTTP_GET,resetUSBHost);
 
     // server.on("/capture", HTTP_GET, testCaptureImage);
 
@@ -424,14 +442,17 @@ void sendPrintCmd()
                 g_printfile.close();
               // DBG_OUTPUT_PORT.print("Print finish!!!");
               String capture_cmd = "Beam-"+cf_node_name+"-Finish";
-              client.print(capture_cmd);
-              client.stop();
+              sendHttpMsg(capture_cmd);
+              // socket_client.stop();
               recv_ok = false;
               recvl_ok = false;
               sendGcode_cnt=0;
               recGok_cnt = 0;
               cmd_fifo.clear();
               setting_fifo.clear();
+              current_bed_temp = "";
+              current_layers = "";
+              current_temp = "";
             }
             else
             {
@@ -450,6 +471,15 @@ void sendPrintCmd()
       {
         sendCmdByPackage(pre_line);
         resend = false;
+      }
+      if (rst_usb == true)
+      {
+        digitalWrite(5, HIGH);
+        delay(50);
+        digitalWrite(5, LOW);
+        delay(500);
+        digitalWrite(5, HIGH);
+        rst_usb = false;
       }
        
     }
@@ -486,6 +516,11 @@ void readLineFromFile()
     if(line.indexOf("&")!=-1)
     {
       cmd_fifo.push(line);
+      if(g_printfile)
+      {
+          g_printfile.close();
+      }
+        
       return;
     }
       

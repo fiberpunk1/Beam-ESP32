@@ -24,8 +24,8 @@ String readLine(File& file)
         }
         else if(tmp>2)
         {
-          if(tmp>48)
-            tmp = 48; //Prevent the string being too long
+          if(tmp>64)
+            tmp = 64; //Prevent the string being too long
           ret = ret.substring(0, tmp);
           return ret;
         }
@@ -100,10 +100,19 @@ void readPrinterBack()
     if(inData.length()>=2)
     {
       //在整行中检测收到ok的情况
-      if(inData.indexOf("resend")!=-1)
+      if((inData.indexOf("resend")!=-1)||(inData.indexOf("Unknown")!=-1))
       {
         resend = true;
-      }      
+        inData="";
+        timecnt = 0;
+        return;
+      }  
+      if(inData.indexOf("setusb")!=-1)
+      {
+        rst_usb = true;
+        inData="";
+        return;
+      }    
       //check temp
       if (inData.indexOf("T:")!=-1)
       {
@@ -127,17 +136,25 @@ void readPrinterBack()
       {
         recv_ok = false;
         recvl_ok = false;
+        timecnt = 0;
       }
 
-      // if(b_time_laspe)
+      if(inData.indexOf("#s")!=-1)
       {
-        if(inData.indexOf("X:")!=-1)
-        {
-          String capture_cmd = "Camera-"+cf_node_name+"-TakeImg";
-          client.print(capture_cmd);
-          timecnt = 0;
-        }   
+        current_usb_status = 1;
       }
+      else if(inData.indexOf("$f")!=-1)
+      {
+        current_usb_status = 0;
+      }
+
+      if(inData.indexOf("X:")!=-1)
+      {
+        String capture_cmd = "Camera-"+cf_node_name+"-TakeImg";
+        // client.print(capture_cmd);
+        sendHttpMsg(capture_cmd);
+        timecnt = 0;
+      }   
       inData="";
          
     }
