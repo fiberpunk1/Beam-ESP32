@@ -95,6 +95,7 @@ Beam provides core APIs to enable more platforms to access him for control. List
 - Download [flash tool](https://github.com/fiberpunk1/Beam-ESP32/releases/download/Beta-v0.1.0/BeamFlash-Installer.exe)
 - Download the latest beam  .bin file from the release package
 - Do as follow:
+
 ![image](./Images/update-bin.png)
 
 
