@@ -70,6 +70,10 @@ void GCODEFIFO::clear()
   head = 0;
   tail = 0;
   numElements = 0;
+  for(int i=0; i< GCODE_FIFO_SIZE; i++)
+  {
+       memset(buffer[i],0,sizeof(char)*64);
+  }
 }
 
 int GCODEFIFO::size() 

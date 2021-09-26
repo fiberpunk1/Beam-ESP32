@@ -151,7 +151,7 @@ void WifiNode::init()
         digitalWrite(GREEN_LED, HIGH);
         digitalWrite(BLUE_LED, HIGH);  
         delay(500);
-        break;      
+        //break;      
     } 
     digitalWrite(RED_LED, HIGH);
     digitalWrite(GREEN_LED, HIGH);

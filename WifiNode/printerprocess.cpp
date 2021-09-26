@@ -44,6 +44,7 @@ String readLine(File& file)
   else
   {
     ret="&&&";
+    file.close();
   }
   
   return ret;

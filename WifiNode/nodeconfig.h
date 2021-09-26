@@ -17,7 +17,7 @@
 #include "crc8.h"
 #include "FiberPunk_SSD1306.h"
 
-#define VERSION 1001
+#define VERSION 1004
 #define DBG_OUTPUT_PORT Serial
 #define PRINTER_PORT Serial
 #define RED_LED 26

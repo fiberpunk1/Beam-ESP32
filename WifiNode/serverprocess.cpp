@@ -103,7 +103,7 @@ void handleDelete()
   // DBG_OUTPUT_PORT.print(path);
   if (path == "/" || !SD_MMC.exists((char *)path.c_str())) 
   {
-    returnFail("BAD PATH");
+    returnFail("No SD Card");
     return;
   }
   deleteRecursive(path);
@@ -118,7 +118,7 @@ void handleCreate() {
   String path = server.arg(0);
   if (path == "/" || SD_MMC.exists((char *)path.c_str())) 
   {
-    returnFail("BAD PATH");
+    returnFail("No SD Card");
     return;
   }
 
@@ -146,7 +146,7 @@ void printDirectory()
   String path = server.arg("dir");
   if (path != "/" && !SD_MMC.exists((char *)path.c_str())) 
   {
-    return returnFail("BAD PATH");
+    return returnFail("No SD Card!");
   }
   File dir = SD_MMC.open((char *)path.c_str());
   path = String();
@@ -220,7 +220,7 @@ void reportDevice()
 }
 void reportVersion()
 {
-  String version = String(VERSION);
+  String version = "version:"+String(VERSION);
   server.send(200, "text/plain",version);
 }
 void printerStatus()
@@ -233,26 +233,33 @@ void printerStatus()
 // send out the cmd package, not just cmd
 void sendCmdByPackage(String cmd)
 {
+  if(current_usb_status)
+  {
+      cmd_length = cmd.length();
+      uint8_t package[cmd_length+4];
+      
+      char str_buf[cmd_length];
+      
+      memset(package, ' ', cmd_length+4);  //fill the package with space char
 
-    cmd_length = cmd.length();
-    uint8_t package[cmd_length+4];
-    
-    char str_buf[cmd_length];
-    
-    memset(package, ' ', cmd_length+4);  //fill the package with space char
+      package[0] = 0xff;         //package head
+      package[1] = cmd_length;
+      cmd.toCharArray(str_buf, cmd_length);
+      memcpy(&package[2], str_buf, cmd_length);
+      package[cmd_length+1] = 0x0a;
+      package[cmd_length+2] = gcrc.get_crc8((uint8_t const*)(package+2), cmd_length);  //input the crc data
+      package[cmd_length+3] = 0xfd; //package tail
+      
+      //String sendgc((char*)package);
+      PRINTER_PORT.write(package,cmd_length+4);
+      //PRINTER_PORT.print(sendgc);
+      PRINTER_PORT.flush();
+  }
+  else
+  {
+    returnFail("NO PRINTER");
+  }
 
-    package[0] = 0xff;         //package head
-    package[1] = cmd_length;
-    cmd.toCharArray(str_buf, cmd_length);
-    memcpy(&package[2], str_buf, cmd_length);
-    package[cmd_length+1] = 0x0a;
-    package[cmd_length+2] = gcrc.get_crc8((uint8_t const*)(package+2), cmd_length);  //input the crc data
-    package[cmd_length+3] = 0xfd; //package tail
-    
-    //String sendgc((char*)package);
-    PRINTER_PORT.write(package,cmd_length+4);
-    //PRINTER_PORT.print(sendgc);
-    PRINTER_PORT.flush();
 }
 
 void resetUSBHost()
@@ -269,52 +276,62 @@ void printerControl()
 {
   if (!server.hasArg("op")) 
   {
-    return returnFail("BAD ARGS");
+    return returnFail("No Command");
   }
   String op = server.arg("op");
 
-  if(op=="PAUSE")
+  if(current_usb_status)
   {
-    g_status = PAUSE;
+      if(op=="PAUSE")
+      {
+        g_status = PAUSE;
 
+      }
+      else if(op=="CANCLE")
+      {
+        g_status = CANCLE;
+        g_status = P_IDEL;
+        if(g_printfile)
+          g_printfile.close();
+          
+        recv_ok = false;
+        recvl_ok = false;
+        sendGcode_cnt=0;
+        recGok_cnt = 0;
+        cmd_fifo.clear();
+        setting_fifo.clear();
+
+        //reset ch554
+        delay(1000);
+        digitalWrite(5, LOW);
+        delay(500);
+        digitalWrite(5, HIGH);
+
+        //test http send
+        sendHttpMsg("Beam-ShellVersion-Finish");
+        // socket_client.stop();
+        current_bed_temp = "";
+        current_layers = "";
+        current_temp = "";
+      }
+      else if(op=="RECOVER")
+      {
+        if(g_status == PAUSE)
+        {
+          g_status = PRINTING;
+          PRINTER_PORT.print("G4 S1.0\n");
+        }
+
+      }
+      returnOK();
   }
-  else if(op=="CANCLE")
+  else
   {
-    g_status = CANCLE;
-    g_status = P_IDEL;
-    if(g_printfile)
-      g_printfile.close();
-      
-    recv_ok = false;
-    recvl_ok = false;
-    sendGcode_cnt=0;
-    recGok_cnt = 0;
-    cmd_fifo.clear();
-    setting_fifo.clear();
-
-    //reset ch554
-    delay(1000);
-    digitalWrite(5, LOW);
-    delay(500);
-    digitalWrite(5, HIGH);
-
-    //test http send
-    sendHttpMsg("Beam-ShellVersion-Finish");
-    // socket_client.stop();
-    current_bed_temp = "";
-    current_layers = "";
-    current_temp = "";
+    returnFail("NO PRINTER");
   }
-  else if(op=="RECOVER")
-  {
-    if(g_status == PAUSE)
-    {
-      g_status = PRINTING;
-      PRINTER_PORT.print("G4 S1.0\n");
-    }
+  
 
-  }
-  returnOK();
+
 }
 
 void getPCAddress()
@@ -335,9 +352,11 @@ void getPCAddress()
 
 void sendGcode()
 {
+  if(current_usb_status)
+  {
     if (!server.hasArg("gc")) 
     {
-        return returnFail("BAD ARGS");
+        return returnFail("No ARGS");
     }
     String op = server.arg("gc")+"\n";
     if(op.startsWith("G0"))
@@ -354,23 +373,38 @@ void sendGcode()
     }
     
     returnOK();
+  }
+  else
+  {
+    returnFail("NO PRINTER");
+  }
+  
 }
 
 void printStart()
 {
-  if (!server.hasArg("filename")) 
+  if(current_usb_status)
   {
-    return returnFail("BAD ARGS");
+    if (!server.hasArg("filename")) 
+    {
+      return returnFail("No file");
+    }
+    String path = server.arg("filename");
+    if (path != "/" && !SD_MMC.exists((char *)path.c_str())) 
+    {
+      return returnFail("No SD Card");
+    }
+    sendCmdByPackage("G4 S1.0\n");
+    delay(1000);
+    printFile(path);
+    returnOK();
   }
-  String path = server.arg("filename");
-  if (path != "/" && !SD_MMC.exists((char *)path.c_str())) 
+  else
   {
-    return returnFail("BAD PATH");
+    returnFail("NO PRINTER");
   }
-  sendCmdByPackage("G4 S1.0\n");
-  delay(1000);
-  printFile(path);
-  returnOK();
+  
+ 
 }
 
 ServerProcess::ServerProcess()
