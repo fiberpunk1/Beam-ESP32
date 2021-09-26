@@ -90,7 +90,11 @@ stop_x and stop_y represents the position where the nozzle is paused when the ca
 Beam provides core APIs to enable more platforms to access him for control. Listed below are the APIs already included in Beam and their specific usage [API Doc](./FP-BeamAPI.md)
 
 
-## 5.Other
-Do not remove the SD card during printing operation.
+## 5.How to update your beam firmware?
+
+- Download [flash tool](https://github.com/fiberpunk1/Beam-ESP32/releases/download/Beta-v0.1.0/BeamFlash-Installer.exe)
+- Download the latest beam  .bin file from the release package
+- Do as follow:
+![image](./Images/update-bin.png)
 
 
