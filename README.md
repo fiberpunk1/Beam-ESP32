@@ -14,8 +14,9 @@
 - Dependencies: Espressif System 1.0.6
 
 ## 2. Beam Project Introduction
-
-<img src="./Images/hardware.jpg" width=400 />
+<div align=center>
+<img src="./Images/hardware.jpg" width=600 />
+</div>
 
 ### 2.1 What is Beam?
 
@@ -62,27 +63,37 @@ Please make sure you have 2.4G network, ESP32 can only connect 2.4G wifi at pres
 
 After inserting the SD card, configure the SD card
 
+<div align=center>
 <img src="./Images/gif/1.config.gif" width=500 />
+</div>
 
 **2.LAN device scanning**
 
+<div align=center>
 <img src="./Images/gif/2.find-devices.gif" width=500 />
+</div>
 
 **3.Control printing**
 
 Control panel.
 
+<div align=center>
 <img src="./Images/gif/3.control-pannel.gif" width=500 />
+</div>
 
 **4.Print**
 
+<div align=center>
 <img src="./Images/gif/5.print.gif" width=500 />
+</div>
 
 **5.Mail configuration**
 
 Email can configure the percentage of each printing completed, take a picture, and send a reminder mail to the designated mailbox. Printing failure reminder is when the software detects the probability of printing failure, it will send an email to notify the user (cooperate with Camera shooting).
 
+<div align=center>
 <img src="./Images/email.png" width=300 />
+</div>
 
 ## 4.Beam-API
 
@@ -94,7 +105,9 @@ Beam provides core APIs to enable more platforms to access him for control. List
 2. On the Beam-ESP32 release page, download the first .bin file
 3. Burn the firmware in the order shown in the following figure:
 
+<div align=center>
 <img src="./Images/update-bin.png" width=300 />
+</div>
 
 
 
