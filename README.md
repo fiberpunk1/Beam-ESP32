@@ -94,7 +94,7 @@ Beam provides core APIs to enable more platforms to access him for control. List
 2. On the Beam-ESP32 release page, download the first .bin file
 3. Burn the firmware in the order shown in the following figure:
 
-<img src="./Images/update-bin.png />
+<img src="./Images/update-bin.png" width=300 />
 
 
 
