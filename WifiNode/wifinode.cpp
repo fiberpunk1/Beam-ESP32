@@ -6,7 +6,15 @@
 #include "nodeconfig.h"
 #include "rBase64.h"
 
+extern void reset559();
+extern void sendCmdByPackage(String cmd);
+extern void sendCmdByPackageNow(String cmd);
+
 FiberPunk_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
+
+//wifi重连
+unsigned long previousMillis = 0;
+unsigned long interval = 30000;
 
 String readConfig(File& file)
 {
@@ -52,7 +60,8 @@ void Write_String(int a,int b,String str){
 String Read_String(int a, int b){ 
     String data = "";
     //从EEPROM中逐个取出每一位的值，并链接
-    for (int i = 0; i < a; i++){
+    for (int i = 0; i < a; i++)
+    {
         data += char(EEPROM.read(b + i));
     }
     return data;
@@ -95,29 +104,35 @@ WifiNode::WifiNode()
 
 }
 
-
+//定时检测
+void WifiNode::checkwifi()
+{
+    unsigned long currentMillis = millis();
+    if ((WiFi.status() != WL_CONNECTED) && (currentMillis - previousMillis >=interval)) 
+    {
+        WiFi.disconnect();
+        WiFi.reconnect();
+        previousMillis = currentMillis;
+    }
+}
 
 void WifiNode::init()
 {
-    //开启双核设置
-    enableCore0WDT(); enableCore1WDT();
-    esp_task_wdt_init(3, false);
 	uint8_t pw_exist = 0;
-    String stop_x_str = "";
-    String stop_y_str = "";
-    String react_l_str = "";
-    String b_time_l_str = "";
 	EEPROM.begin(256);
     //0.初始化串口和OLED屏
-    PRINTER_PORT.begin(100000);
+    PRINTER_PORT.begin(115200);
     PRINTER_PORT.setTimeout(120);
     PRINTER_PORT.setRxBufferSize(512);
     PRINTER_PORT.setDebugOutput(true);
-    // DBG_OUTPUT_PORT.print("\n");
+
     pinMode(5, OUTPUT);
-    digitalWrite(5, HIGH);
+    digitalWrite(5, LOW);
     pinMode(19, OUTPUT);
     digitalWrite(19, LOW);
+
+    pinMode(18, OUTPUT);
+    digitalWrite(18, HIGH);//default beam
 
     pinMode(RED_LED, OUTPUT);
     pinMode(GREEN_LED, OUTPUT);
@@ -137,6 +152,13 @@ void WifiNode::init()
     delay(2000); // Pause for 2 seconds   
     message_display("Checking SD Card ...");
     delay(2000);
+    //让打印机释放SD卡
+    reset559();
+    delay(1000);
+    sendCmdByPackageNow("G28\n");
+    delay(1000);
+    sendCmdByPackageNow("M22\n");
+    delay(500);
     //1.初始化SD
     while(!SD_MMC.begin())
     {
@@ -151,12 +173,14 @@ void WifiNode::init()
         digitalWrite(GREEN_LED, HIGH);
         digitalWrite(BLUE_LED, HIGH);  
         delay(500);
-        //break;      
+//        break;      
     } 
     digitalWrite(RED_LED, HIGH);
     digitalWrite(GREEN_LED, HIGH);
     digitalWrite(BLUE_LED, HIGH);
     uint8_t cardType = SD_MMC.cardType();
+
+
 
     if(cardType == CARD_NONE){
         //Serial.println("No SD_MMC card attached");
@@ -199,38 +223,7 @@ void WifiNode::init()
         {
             cf_node_name = getValue(tmp_str, ':', 1);
         }
-        
-        //stop_x
-        tmp_str = readConfig(config_file);
-        if (tmp_str.indexOf("stop_x")!=-1)
-        {
-            stop_x_str = getValue(tmp_str, ':', 1);
-            //stop_x = tmp_str.toInt();
-        }
-        
-        //stop_y
-        tmp_str = readConfig(config_file);
-        if (tmp_str.indexOf("stop_y")!=-1)
-        {
-            stop_y_str = getValue(tmp_str, ':', 1);
-            //stop_y = tmp_str.toInt();
-        }
-
-        //react e       
-        tmp_str = readConfig(config_file);
-        if (tmp_str.indexOf("react_length")!=-1)
-        {
-            react_l_str = getValue(tmp_str, ':', 1);
-            //react_length = tmp_str.toFloat();
-        }
-
-        //b_time_laspe
-        tmp_str = readConfig(config_file);
-        if (tmp_str.indexOf("b_time_laspe")!=-1)
-        {
-            b_time_l_str = getValue(tmp_str, ':', 1);
-            //b_time_laspe = (unsigned char)tmp_str.toInt();
-        }        
+               
     }
     config_file.close();
 	
@@ -238,64 +231,24 @@ void WifiNode::init()
     {   
         Write_String(1,30,cf_ssid);
         cf_ssid = Read_String(EEPROM.read(1),30);
-        DBG_OUTPUT_PORT.print(cf_ssid);
-		
+        delay(100);
         Write_String(5,60,cf_password);
         cf_password = Read_String(EEPROM.read(5),60);
-        DBG_OUTPUT_PORT.print(cf_password);
-
+        delay(100);
         Write_String(9,90,cf_node_name);
         cf_node_name = Read_String(EEPROM.read(9),90);
-        DBG_OUTPUT_PORT.print(cf_node_name);
-
-        Write_String(13,120,cf_node_name);
-        cf_node_name = Read_String(EEPROM.read(13),120);
-        DBG_OUTPUT_PORT.print(cf_node_name);
-
-        Write_String(17,150,stop_x_str);
-        stop_x_str = Read_String(EEPROM.read(17),150);
-        DBG_OUTPUT_PORT.print(stop_x_str);
-        stop_x = stop_x_str.toInt();
-
-        Write_String(21,180,stop_y_str);
-        stop_y_str = Read_String(EEPROM.read(21),180);
-        DBG_OUTPUT_PORT.print(stop_y_str);
-        stop_y = stop_y_str.toInt();
-
-        Write_String(25,210,react_l_str);
-        react_l_str = Read_String(EEPROM.read(25),210);
-        DBG_OUTPUT_PORT.print(react_l_str);
-        react_length = react_l_str.toFloat();
-
-        Write_String(29,250,b_time_l_str);
-        b_time_l_str = Read_String(EEPROM.read(29),250);
-        DBG_OUTPUT_PORT.print(b_time_l_str);
-        b_time_laspe = (unsigned char)b_time_l_str.toInt();
-
+        delay(100);
+        
         SD_MMC.remove("/config.txt");
     }
     else
     {
-		
         cf_ssid = Read_String(EEPROM.read(1),30);
-        
+        delay(100);
         cf_password = Read_String(EEPROM.read(5),60);
-
+        delay(100);
         cf_node_name = Read_String(EEPROM.read(9),90);
-
-        cf_node_name = Read_String(EEPROM.read(13),120);
-
-        stop_x_str = Read_String(EEPROM.read(17),150);
-        stop_x = stop_x_str.toInt();
-
-        stop_y_str = Read_String(EEPROM.read(21),180);
-        stop_y = stop_y_str.toInt();
-
-        react_l_str = Read_String(EEPROM.read(25),210);
-        react_length = react_l_str.toFloat();
-
-        b_time_l_str = Read_String(EEPROM.read(29),250);
-        b_time_laspe = (unsigned char)b_time_l_str.toInt();
+       
     }
     
     WiFi.mode(WIFI_STA);
@@ -338,18 +291,15 @@ void WifiNode::init()
     //4. crc init
     gcrc.begin();
     
-    digitalWrite(5, HIGH);
-    delay(50);
-    digitalWrite(5, LOW);
-    delay(500);
-    digitalWrite(5, HIGH);
-    camera_trigger();
+    reset559();
+    // camera_trigger();
     delay(500);
 }
 
 void WifiNode::process()
 {
     serverprocesser.serverLoop();
+    checkwifi();
     if(pre_usb_status!=current_usb_status)
     {
         if(current_usb_status)//connected

@@ -17,7 +17,7 @@
 #include "crc8.h"
 #include "FiberPunk_SSD1306.h"
 
-#define VERSION 1004
+#define VERSION 2021-12-6-1005
 #define DBG_OUTPUT_PORT Serial
 #define PRINTER_PORT Serial
 #define RED_LED 26
@@ -48,17 +48,14 @@ enum ERROR_CODE
   OPEN_FAILED=1,
 };
 
-extern GCODEFIFO cmd_fifo;
-extern CMDFIFO setting_fifo;
 extern WebServer server;
 // extern HTTPClient http_client;
-// extern WiFiClient socket_client;
+extern WiFiClient socket_client;
 extern CRC8 gcrc;
 
 extern File uploadFile;
-extern File g_printfile;
 
-extern String pre_line;
+
 extern String cf_ssid;
 extern String cf_password;
 extern String cf_node_name;
@@ -68,28 +65,18 @@ extern String current_temp;
 extern String current_bed_temp;
 extern String pc_ipaddress;
 
-extern unsigned int stop_x;
-extern unsigned int stop_y;
-extern unsigned char b_time_laspe;
-extern float react_length;
-
-
-
 extern OP_STATUS g_status;
 extern ERROR_CODE g_error;
 
-extern unsigned long timecnt;
 extern bool time_out;
 
 
 extern bool hasSD;
 extern bool recv_ok;
 extern bool recvl_ok;
-extern bool resend;
 extern bool rst_usb;
+extern bool paused_for_user;
 
-extern unsigned int sendGcode_cnt;
-extern unsigned int recGok_cnt;
 
 extern uint8_t cmd_length;
 
@@ -98,6 +85,7 @@ extern unsigned char pre_usb_status;
 
 
 extern void sendHttpMsg(String);
+extern void writeLog(String);
 class NodeConfig
 {
 public:

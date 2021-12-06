@@ -2,13 +2,11 @@
 
 WebServer server(80);
 HTTPClient http_client;
-// WiFiClient socket_client;
+WiFiClient socket_client;
 CRC8 gcrc;
 
-GCODEFIFO cmd_fifo;
-CMDFIFO setting_fifo;
-
 File uploadFile;
+
 String pre_line="";
 String cf_ssid = "";
 String cf_password = "";
@@ -19,37 +17,39 @@ String current_temp = "";
 String current_bed_temp = "";
 String pc_ipaddress = "";
 
-unsigned int stop_x = 200;
-unsigned int stop_y = 200;
-unsigned char b_time_laspe = 1;
-float react_length = 4.5;
-
-File g_printfile;
 OP_STATUS g_status=P_IDEL;
 ERROR_CODE g_error=NORMAL;
 
-unsigned int sendGcode_cnt = 0;
-unsigned int recGok_cnt = 0;
 
 bool recv_ok = false;
 bool recvl_ok = false;
 bool hasSD = false;
-bool resend = false;
 bool rst_usb = false;
+bool paused_for_user = false;
 
 unsigned char current_usb_status = 0;
 unsigned char pre_usb_status = 0;
 
 
-unsigned long timecnt = 0;
+
 uint8_t cmd_length=0;
 
 
 void sendHttpMsg(String);
+void writeLog(String);
+
+void writeLog(String log_txt)
+{
+    if(g_status==PRINTING)
+    {
+        sendHttpMsg(log_txt);
+    }
+
+}
 
 void sendHttpMsg(String url)
 {
-#if 1
+#if 0
     String http_url = "http://"+pc_ipaddress+":8002/"+"api/"+url;
     http_client.begin(http_url);
     int httpRsponCode = http_client.POST(http_url);
@@ -64,7 +64,7 @@ void sendHttpMsg(String url)
         
     }
 #endif
-    // socket_client.print(url);
+    socket_client.print(url);
     
 }
 NodeConfig::NodeConfig()

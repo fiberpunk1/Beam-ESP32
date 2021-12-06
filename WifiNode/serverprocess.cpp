@@ -2,15 +2,18 @@
 #include "printerprocess.h"
 #include "nodeconfig.h"
 
-extern void printFile(String);
-extern  String  readLine(File&);
 
 const char* host = "EdgeeWifi";
-
+void espGetSDCard();
+void espReleaseSD();
+void reset559();
+void sendCmdByPackage(String cmd);
+void sendCmdByPackageNow(String cmd);
+void cancleOrFinishPrint();
 
 void returnOK() 
 {
-  server.send(200, "text/plain", "");
+  server.send(200, "text/plain", "ok");
 }
 
 void returnFail(String msg) 
@@ -187,6 +190,61 @@ void printDirectory()
   server.sendContent("]");
   dir.close();
 }
+void sendCmdByPackageNow(String cmd)
+{
+    cmd_length = cmd.length();
+    uint8_t package[cmd_length+4];
+    
+    char str_buf[cmd_length];
+    
+    memset(package, ' ', cmd_length+4);  //fill the package with space char
+
+    package[0] = 0xff;         //package head
+    package[1] = cmd_length;
+    cmd.toCharArray(str_buf, cmd_length);
+    memcpy(&package[2], str_buf, cmd_length);
+    package[cmd_length+1] = 0x0a;
+    package[cmd_length+2] = gcrc.get_crc8((uint8_t const*)(package+2), cmd_length);  //input the crc data
+    package[cmd_length+3] = 0xfd; //package tail
+    
+    //String sendgc((char*)package);
+    PRINTER_PORT.write(package,cmd_length+4);
+    //PRINTER_PORT.print(sendgc);
+    PRINTER_PORT.flush();
+}
+// send out the cmd package, not just cmd
+void sendCmdByPackage(String cmd)
+{
+  // writeLog("Send:");
+  // writeLog(cmd);
+  if(current_usb_status)
+  {
+      cmd_length = cmd.length();
+      uint8_t package[cmd_length+4];
+      
+      char str_buf[cmd_length];
+      
+      memset(package, ' ', cmd_length+4);  //fill the package with space char
+
+      package[0] = 0xff;         //package head
+      package[1] = cmd_length;
+      cmd.toCharArray(str_buf, cmd_length);
+      memcpy(&package[2], str_buf, cmd_length);
+      package[cmd_length+1] = 0x0a;
+      package[cmd_length+2] = gcrc.get_crc8((uint8_t const*)(package+2), cmd_length);  //input the crc data
+      package[cmd_length+3] = 0xfd; //package tail
+      
+      //String sendgc((char*)package);
+      PRINTER_PORT.write(package,cmd_length+4);
+      //PRINTER_PORT.print(sendgc);
+      PRINTER_PORT.flush();
+  }
+  else
+  {
+    returnFail("NO PRINTER");
+  }
+
+}
 
 void handleNotFound() 
 {
@@ -225,51 +283,47 @@ void reportVersion()
 }
 void printerStatus()
 {
-  String result = total_layers+","+current_layers+","+current_temp; 
- 
+  sendCmdByPackage("M105\n");
+  delay(200);
+  if(g_status==PRINTING)
+  {
+    sendCmdByPackage("M27\n");
+    delay(200);
+  }
+  String result = current_temp+","+current_bed_temp+","+current_layers; 
   server.send(200, "text/plain",result);
 }
 
-// send out the cmd package, not just cmd
-void sendCmdByPackage(String cmd)
+void reset559()
 {
-  if(current_usb_status)
-  {
-      cmd_length = cmd.length();
-      uint8_t package[cmd_length+4];
-      
-      char str_buf[cmd_length];
-      
-      memset(package, ' ', cmd_length+4);  //fill the package with space char
-
-      package[0] = 0xff;         //package head
-      package[1] = cmd_length;
-      cmd.toCharArray(str_buf, cmd_length);
-      memcpy(&package[2], str_buf, cmd_length);
-      package[cmd_length+1] = 0x0a;
-      package[cmd_length+2] = gcrc.get_crc8((uint8_t const*)(package+2), cmd_length);  //input the crc data
-      package[cmd_length+3] = 0xfd; //package tail
-      
-      //String sendgc((char*)package);
-      PRINTER_PORT.write(package,cmd_length+4);
-      //PRINTER_PORT.print(sendgc);
-      PRINTER_PORT.flush();
-  }
-  else
-  {
-    returnFail("NO PRINTER");
-  }
-
+  digitalWrite(5, LOW);
+  delay(50);
+  digitalWrite(5, HIGH);
+  delay(500);
+  digitalWrite(5, LOW);
 }
+
 
 void resetUSBHost()
 {
-  digitalWrite(5, HIGH);
-  delay(50);
-  digitalWrite(5, LOW);
-  delay(500);
-  digitalWrite(5, HIGH);
+  reset559();
   returnOK();
+}
+
+void cancleOrFinishPrint()
+{
+    String finish_cmd = "Beam-"+cf_node_name+"-Finish";
+    g_status = CANCLE;
+    g_status = P_IDEL;
+    recv_ok = false;
+    recvl_ok = false;
+    sendCmdByPackage("M524\n");
+    current_bed_temp = "";
+    current_layers = "";
+    current_temp = "";
+    espGetSDCard();
+    sendHttpMsg(finish_cmd);
+    socket_client.stop();
 }
 
 void printerControl()
@@ -285,43 +339,30 @@ void printerControl()
       if(op=="PAUSE")
       {
         g_status = PAUSE;
+        sendCmdByPackage("M0\n");
 
       }
       else if(op=="CANCLE")
       {
-        g_status = CANCLE;
-        g_status = P_IDEL;
-        if(g_printfile)
-          g_printfile.close();
-          
-        recv_ok = false;
-        recvl_ok = false;
-        sendGcode_cnt=0;
-        recGok_cnt = 0;
-        cmd_fifo.clear();
-        setting_fifo.clear();
-
-        //reset ch554
-        delay(1000);
-        digitalWrite(5, LOW);
-        delay(500);
-        digitalWrite(5, HIGH);
-
-        //test http send
-        sendHttpMsg("Beam-ShellVersion-Finish");
-        // socket_client.stop();
-        current_bed_temp = "";
-        current_layers = "";
-        current_temp = "";
+        cancleOrFinishPrint();
       }
       else if(op=="RECOVER")
       {
         if(g_status == PAUSE)
         {
           g_status = PRINTING;
-          PRINTER_PORT.print("G4 S1.0\n");
+          // PRINTER_PORT.print("G4 S1.0\n");
+          sendCmdByPackage("M108\n");
         }
 
+      }
+      else if(op=="GETSD")
+      {
+        espGetSDCard();
+      }
+      else if(op=="RELEASESD")
+      {
+        espReleaseSD();
       }
       returnOK();
   }
@@ -341,10 +382,10 @@ void getPCAddress()
         return returnFail("BAD ARGS");
     }
     pc_ipaddress = server.arg("ip");
-    // if (!socket_client.connect(pc_ipaddress.c_str(), 1688)) 
-    // {
-    //     return returnFail("Connect PC failed!");
-    // }
+    if (!socket_client.connect(pc_ipaddress.c_str(), 1688)) 
+    {
+        return returnFail("Connect PC failed!");
+    }
 
     returnOK();
 }
@@ -389,14 +430,22 @@ void printStart()
     {
       return returnFail("No file");
     }
+    espReleaseSD();
+    delay(500);
     String path = server.arg("filename");
-    if (path != "/" && !SD_MMC.exists((char *)path.c_str())) 
+    if(g_status==P_IDEL)
     {
-      return returnFail("No SD Card");
+      if (!socket_client.connect(pc_ipaddress.c_str(), 1688)) 
+      {
+          return returnFail("Connect PC failed!");
+      }
+      String print_cmd = "M23 "+path+"\n";
+      sendCmdByPackage(print_cmd);
+      delay(200);
+      sendCmdByPackage("M24\n");
+      g_status = PRINTING;
+
     }
-    sendCmdByPackage("G4 S1.0\n");
-    delay(1000);
-    printFile(path);
     returnOK();
   }
   else
@@ -404,7 +453,6 @@ void printStart()
     returnFail("NO PRINTER");
   }
   
- 
 }
 
 ServerProcess::ServerProcess()
@@ -414,8 +462,9 @@ ServerProcess::ServerProcess()
 
 void ServerProcess::serverInit()
 {
-    File uploadFile;
     String pre_line="";
+        //log file
+
 
     File g_printfile;
     OP_STATUS g_status=P_IDEL;
@@ -451,6 +500,8 @@ void ServerProcess::serverInit()
     }, handleFileUpload);
     server.onNotFound(handleNotFound);
 
+  
+
   server.begin();
 
   // DBG_OUTPUT_PORT.println("HTTP server started");
@@ -458,172 +509,66 @@ void ServerProcess::serverInit()
 }
 
 
-
-void sendPrintCmd()
+void espReleaseSD()
 {
-    if(g_status==PRINTING)
-    {
-      if(recv_ok)
-      {
-        if(cmd_fifo.size()>0)
-        {
-            String send_line = cmd_fifo.pop();
-            pre_line = send_line;
-            if(send_line.indexOf("&")!=-1)
-            {
-              g_status=P_IDEL;
-              if(g_printfile)
-                g_printfile.close();
-              // DBG_OUTPUT_PORT.print("Print finish!!!");
-              String capture_cmd = "Beam-"+cf_node_name+"-Finish";
-              sendHttpMsg(capture_cmd);
-              // socket_client.stop();
-              recv_ok = false;
-              recvl_ok = false;
-              sendGcode_cnt=0;
-              recGok_cnt = 0;
-              cmd_fifo.clear();
-              setting_fifo.clear();
-              current_bed_temp = "";
-              current_layers = "";
-              current_temp = "";
-            }
-            else
-            {
-              sendCmdByPackage(send_line);
-            }
-            recv_ok = false;
-            recvl_ok = false;
-        }
-      }
-      if (timecnt>1000)
-      {
-        sendCmdByPackage(pre_line);
-        timecnt = 0;
-      }
-      if (resend == true)
-      {
-        sendCmdByPackage(pre_line);
-        resend = false;
-      }
-      if (rst_usb == true)
-      {
-        digitalWrite(5, HIGH);
-        delay(50);
-        digitalWrite(5, LOW);
-        delay(500);
-        digitalWrite(5, HIGH);
-        rst_usb = false;
-      }
-       
-    }
-    else if(g_status==PAUSE)
-    {
-      recv_ok = false;
-      recvl_ok = false;
-    }
-    else if(g_status==CANCLE)
-    {
-      if(g_printfile)
-        g_printfile.close();
-      g_status = P_IDEL;
-      recv_ok = false;
-      recvl_ok = false;
-      cmd_fifo.clear();
-      setting_fifo.clear();
-    }
+    //1.release SD card
+    pinMode(2, INPUT_PULLUP);
+    pinMode(4, INPUT_PULLUP);
+    pinMode(12, INPUT_PULLUP);
+    pinMode(13, INPUT_PULLUP);
+    pinMode(14, INPUT_PULLUP);
+    pinMode(15, INPUT_PULLUP);
+
+    digitalWrite(18, LOW);  
+    delay(500);
+  
+    //2.send gcode to marlin, init and reload the sd card
+    sendCmdByPackage("M21\n");
+    delay(500);  
+    SD_MMC.end();  
 }
 
-
-void readLineFromFile()
+void espGetSDCard()
 {
-  if(g_printfile && (g_status==PRINTING) && cmd_fifo.size()<GCODE_FIFO_SIZE)
-  {
-    if(setting_fifo.size()>0)
+    //0. release sd from marlin
+    sendCmdByPackage("M22\n");
+    delay(500);
+    digitalWrite(18, HIGH); 
+
+    //1.初始化SD
+    while(!SD_MMC.begin())
     {
-        String setting_cmd = setting_fifo.pop();
-        cmd_fifo.push(setting_cmd);
-        return;
-    }
-    //1. 读取一行Gcode, 如果是注释行则跳过
-    String line = readLine(g_printfile);
-    if(line.indexOf("&")!=-1)
-    {
-      cmd_fifo.push(line);
-      if(g_printfile)
-      {
-          g_printfile.close();
-      }
-        
-      return;
-    }
+        digitalWrite(RED_LED, LOW);
+        digitalWrite(GREEN_LED, HIGH);
+        digitalWrite(BLUE_LED, HIGH);
       
-    while(line.startsWith(";")||(line.length()<=1))
+        delay(500);
+        digitalWrite(RED_LED, HIGH);
+        digitalWrite(GREEN_LED, HIGH);
+        digitalWrite(BLUE_LED, HIGH);  
+        delay(500);
+        //break;      
+    } 
+    digitalWrite(RED_LED, HIGH);
+    digitalWrite(GREEN_LED, HIGH);
+    digitalWrite(BLUE_LED, HIGH);
+    uint8_t cardType = SD_MMC.cardType();
+
+    if(cardType == CARD_NONE)
     {
-      if((line.indexOf("_COUNT:")!=-1) || (line.indexOf("count:")!=-1))
-      {
-        total_layers = line;
-
-      }
-      if(line.indexOf("LAYER:")!=-1)
-      {
-        current_layers = line;
-        // if(b_time_laspe)
-        // {
-        //   //move to the side, and delay 2 seconds, to make time 
-        //   String relative_mode = "G91 \n";
-        //   String absolute_mode = "G90 \n";
-        //   String e_react = "G1 E-"+String(react_length)+"\n";
-        //   String e_exrude = "G1 E"+String(react_length/4)+"\n";
-        //   String stop_up = "G0 F4500 X"+ String(stop_x)+" Y"+String(stop_y)+"\n";
-        //   String capture_time = "G4 S2.0\n";
-        //   String capture_flag = "M114\n";
-        //   String z_up = "G0 Z2.0 \n";
-        //   String z_down = "G0 Z-2 \n";
-
-        //   setting_fifo.push(relative_mode);
-        //   setting_fifo.push(e_react);
-        //   setting_fifo.push(z_up);
-        //   setting_fifo.push(absolute_mode);
-
-        //   setting_fifo.push(stop_up);
-        //   setting_fifo.push(capture_time);
-        //   setting_fifo.push(capture_flag);
-          
-
-        //   setting_fifo.push(relative_mode);
-        //   setting_fifo.push(z_down);
-        //   // setting_fifo.push(e_exrude);
-        //   setting_fifo.push(absolute_mode);
-        // }
-
-      }
-      line = readLine(g_printfile);
+        //Serial.println("No SD_MMC card attached");
+        //return;
     }  
-    cmd_fifo.push(line);
-
-    sendGcode_cnt++;
-
-    if (sendGcode_cnt == 20)
-    {
-      String CMD_M105 = "M105\n";
-      setting_fifo.push(CMD_M105);
-    }
-    if ((sendGcode_cnt >= 250))
-    {
-      String CMD_M105 = "M105\n";
-      sendGcode_cnt = 0;
-      setting_fifo.push(CMD_M105);
-    }   
-  }
 }
-
 
 void ServerProcess::serverLoop()
 {
     server.handleClient();
-    readLineFromFile();
-    sendPrintCmd();
+    if (rst_usb == true)
+    {
+        reset559();
+        rst_usb = false;
+    }
     if (g_status==PRINTING)
     {
       digitalWrite(RED_LED, HIGH);
@@ -635,5 +580,10 @@ void ServerProcess::serverLoop()
       digitalWrite(RED_LED, HIGH);
       digitalWrite(GREEN_LED, LOW);
       digitalWrite(BLUE_LED, HIGH);
+    }
+    if(paused_for_user)
+    {
+      paused_for_user = false;
+      sendCmdByPackage("M108\n");
     }
 }
