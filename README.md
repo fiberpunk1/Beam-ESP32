@@ -1,6 +1,6 @@
 
 
-<p align="center"><img src="./Images/logo.png" alt="FiberPunk's logo" /></p>
+<p align="center"><img src="./Images/logo.png" alt="FiberPunk's logo" width=400/></p>
 
 <h1 align="center">Beam-ESP32</h1>
 <p align="center">
@@ -15,7 +15,7 @@
 
 ## 2. Beam Project Introduction
 
-![ Img ](./Images/hardware.jpg)
+<img src="./Images/hardware.jpg" width=400 />
 
 ### 2.1 What is Beam?
 
@@ -58,31 +58,31 @@ Please make sure you have 2.4G network, ESP32 can only connect 2.4G wifi at pres
 
 ### 3.2 Quick start
 
-1. Network Configuration
+**1.Network Configuration**
 
 After inserting the SD card, configure the SD card
 
-![ Img ](./Images/gif/1.config.gif)
+<img src="./Images/gif/1.config.gif" width=500 />
 
-2. LAN device scanning
+**2.LAN device scanning**
 
-![ Img ](./Images/gif/2.find-devices.gif)
+<img src="./Images/gif/2.find-devices.gif" width=500 />
 
-3. Control printing
+**3.Control printing**
 
 Control panel.
 
-![ Img ](./Images/gif/3.control-pannel.gif)
+<img src="./Images/gif/3.control-pannel.gif" width=500 />
 
-4. Print
+**4.Print**
 
-![ Img ](./Images/gif/5.print.gif)
+<img src="./Images/gif/5.print.gif" width=500 />
 
-5. Mail configuration
+**5.Mail configuration**
 
 Email can configure the percentage of each printing completed, take a picture, and send a reminder mail to the designated mailbox. Printing failure reminder is when the software detects the probability of printing failure, it will send an email to notify the user (cooperate with Camera shooting).
 
-![ Img ](./Images/email.png)
+<img src="./Images/email.png" width=300 />
 
 ## 4.Beam-API
 
@@ -94,7 +94,7 @@ Beam provides core APIs to enable more platforms to access him for control. List
 2. On the Beam-ESP32 release page, download the first .bin file
 3. Burn the firmware in the order shown in the following figure:
 
-![ Img ](./Images/update-bin.png)
+<img src="./Images/update-bin.png />
 
 
 
