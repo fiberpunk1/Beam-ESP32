@@ -1,4 +1,5 @@
 
+
 <p align="center"><img src="./Images/logo.png" alt="FiberPunk's logo" /></p>
 
 <h1 align="center">Beam-ESP32</h1>
@@ -8,94 +9,89 @@
 
 </p>
 
-## 1. Project Description
+## 1. Project catalog description
 
-- dependency: Espressif System 1.0.6
+- Dependencies: Espressif System 1.0.6
 
+## 2. Beam Project Introduction
 
-## 2. Introduction to Beam project
+![ Img ](./Images/hardware.jpg)
 
-### 2.1 What is Beam？
+### 2.1 What is Beam?
 
-Beam is a ESP32 based device with ability to monitor and control Marlin based printers via USB enabled serial. It has a micro-SD card to store gcode and settings and multiple i/o ports to connect with external devices.  Users can manage multiple Beams via applications running on desktop and phone apps via the network. We plan to expand support to other 3D printer firmware and non 3D printer firmware (CNC, Engraver and etc)
+Beam is a module for FDM printers with wifi file transfer and wifi control printing functions. Unlike Raspberry Pi, Beam uses a simpler microprocessor to handle these tasks. It includes such features as:
 
+- Really easy to config (Plug & Play)
+- Do not rely on the Internet, do not rely on any cloud functions
+- Faster and more stable data transfer with the printer (SD card printing)
+- Good device compatibility, no need to do any configuration, can be compatible with most models (thanks to UsbHost SD technology)
+- It is very easy to expand multiple devices, one PC manages many different type of 3D printers from different manufacturers
+- Lower hardware cost investment
+- With BeamManager, you can realize the progress of email reminders
+- Provide a simple Restful API to let other software control (such as postman debugging tools)
+- Includes expansion interface (IIC, UART, SLR control circuit)
+- With ESP32-Camera, it can realize time-lapse photography production, take photos according to schedule and email reminders, PC local printing failure detection and smoke and flame detection, all of which do not rely on registered accounts and networks
 
-### 2.2 Why did we develop Beam？
+In order to better realize its own functions, Beam has developed its own electronic hardware and established an open source community. Customized hardware can enable users to get a better experience, rather than pieced together functions. Beam is a complete solution. The combination of software and hardware is more harmonious. Only when both are taken into account at the same time can the out-of-the-box experience be achieved.
 
-More than 90% of FDM printers on the market are not network-enabled. This lack of connectivity limits printers to only local resources and is unable to be managed intelligently. For those FDM printers that have network access via WiFi, many require the user to open up a printer to add an extra module, while others may need to run a full operating system-enabled computer like Raspberry Pi.  There is no easy to set up, affordable and robust solution that is both plug and play and can be deployed quickly over many printers.  That was the problem we ran into when setting up our print farm, and we decided to develop Beam.
+### 2.Why Beam?
 
-### 2.3 What makes Beam different from other solution
+Why do we do the Beam project? In summary, there are several reasons:
 
-- East to install: Beam can be installed by simply plugged into a USB enabled serial connection. This means no opening up the printer and complicated wiring. Anyone can do it.
-- Easy to set up: Beam can be set up to connect user network by simply running the desktop application, enter network credentials and export the setting to sd card. 
-- Robust: Beam firmware runs on ESP32 chip which does not require boot up or proper shutdown. It is on instantly. 
-- Affordable: Beam is more affordable as it is MCU ESP32 based solution.
-- Expandable: Beam has plenty I/O，I2C，and UART  to grow. We also have a roadmap for additional auxiliaries that will add features to Beam
-- Open Source: We are building an open source community around Beam 
+- The requirements for installing and using Octoprint on Raspberry Pi are still very high for most people.
+- We don’t want to disassemble the machine and then wire it so that the 3D printer has some additional functions
+- We don't want to use the cloud server to monitor and upload our print files to other people's servers
+- Raspberry Pi is not cheap. When there are multiple printers, the workload is multiple times.
+- When we have multiple 3D printers of different models and manufacturers, it is very troublesome to manage them uniformly
+- Cloud as a Service is expensive, especially for AI inference servers. We hope to use the monitoring function, using the local PC CPU resources to achieve AI monitoring technology
 
+Using Beam, you can perfectly avoid the problems listed above and implement Plug & Play.
 
-## 3. Hardware
+## 3. Quick start
 
-### Beam's Electronic Module
+### 3.1 The network requirements of the host computer
 
-![image](Images/hardware.jpg)
+Please make sure you have 2.4G network, ESP32 can only connect 2.4G wifi at present. In addition, 360 or some antivirus software, the computer set static IP, VPN, etc., will have an impact on the device search. If you want to use an automated search device, make sure that your computer's IP network segment is consistent with the router's network segment.
 
-### Beam's 3D Print Shell
+### 3.2 Quick start
 
-![image](Images/box-shell-for-3d-print.jpg)
+1. Distribution network
 
-## 4. Quick Start
+After inserting the SD card, configure the SD card
 
+![ Img ](./Images/gif/1.config.gif)
 
-### 3.1 Network requirements of the host computer
+2. LAN device scanning
 
-Please make sure that there is a 2.4G network in your network, and ESP32 can only connect to 2.4G wifi at present. In addition, 360 or some anti-virus software, the computer is set with static IP, VPN, etc., will affect the device search. Please make sure that the IP network segment of your computer is consistent with the network segment of the router.
-After opening the host computer, click Scan Device, it will automatically scan all the devices in the local area network, and then generate the corresponding operation window.
+![ Img ](./Images/gif/2.find-devices.gif)
 
+3. Control printing
 
+Control panel and upload files:
 
-### 3.2 How to configure the config.txt in the SD card
+![ Img ](./Images/gif/3.control-pannel.gif)
 
-as follows is a typical configuration:
-```
-ssid:you-wifi-ssid
-pass_word:you-wifi-password
-device_name:device-name
-stop_x:200
-stop_y:210
-react_length:4.5
-b_time_laspe:1
+4. Print
 
-```
-stop_x and stop_y represents the position where the nozzle is paused when the camera is shooting, and react_length is the distance that the nozzle needs to withdraw when it moves to a fixed position before the camera is shooting.
+![ Img ](./Images/gif/5.print.gif)
 
->Note 1: The setting parameters after the above colon must not have spaces.
+5. Mail configuration
 
->Note 2: After the last line, there must be a line break.
+The mail can be configured to print out the percentage, take a picture, and send a reminder email to the specified mailbox. Printing failure reminder is when the software detects the probability of printing failure, send an email to notify the user (with Camera shooting).
 
->Note 3: The config.txt file must be present, otherwise the Beam will not work normally.
+![ Img ](./Images/email.png)
 
+## 4.Beam-API
 
-### 3.3 The light effect indicates that the
+Beam provides the core API to allow more platforms to access his control. Below is a list of the APIs that Beam already includes and how to use them.[API docs](./FP-BeamAPI.md)
 
-- power supply is normal. : After power on, it is normal, the small red light is always on.
-- SD card verification failed: the red light is flashing.
-- Wifi link failed: the red light is always on.
-- Initialization is normal: green light (IDLE state) and
-- printing running: blue light (PRINTING state)
+## 5.How to update Beam-ESP32 firmware
 
+1. Download [flash tool](https://github.com/fiberpunk1/Beam-ESP32/releases/download/Beta-v0.1.0/BeamFlash-Installer.exe)
+2. On the Beam-ESP32 release page, download the first .bin file
+3. Burn the firmware in the order shown in the figure below:
 
-## 4.Beam Restful API
+![ Img ](./Images/update-bin.png)
 
-Beam provides core APIs to enable more platforms to access him for control. Listed below are the APIs already included in Beam and their specific usage [API Doc](./FP-BeamAPI.md)
-
-
-## 5.How to update your beam firmware?
-
-- Download [flash tool](https://github.com/fiberpunk1/Beam-ESP32/releases/download/Beta-v0.1.0/BeamFlash-Installer.exe)
-- Download the latest beam  .bin file from the release package
-- Do as follow:
-
-![image](./Images/update-bin.png)
 
 
