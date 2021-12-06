@@ -19,35 +19,38 @@
 
 ### 2.1 What is Beam?
 
-Beam is a module for FDM printers with wifi file transfer and wifi control printing functions. Unlike Raspberry Pi, Beam uses a simpler microprocessor to handle these tasks. It includes such features as:
+Beam is an easy and affordable way to control and monitor 3D printers via WiFi, USB-enabled serial, and SD I/O. Beam is very robust and power-efficient as it runs on an MCU (ESP32) while still offering a wide range of functionalities.
 
-- Really easy to config (Plug & Play)
-- Do not rely on the Internet, do not rely on any cloud functions
-- Faster and more stable data transfer with the printer (SD card printing)
-- Good device compatibility, no need to do any configuration, can be compatible with most models (thanks to UsbHost SD technology)
-- It is very easy to expand multiple devices, one PC manages many different type of 3D printers from different manufacturers
-- Lower hardware cost investment
-- With BeamManager, you can realize the progress of email reminders
-- Provide a simple Restful API to let other software control (such as postman debugging tools)
-- Includes expansion interface (IIC, UART, SLR control circuit)
-- With ESP32-Camera, it can realize time-lapse photography production, take photos according to schedule and email reminders, PC local printing failure detection and smoke and flame detection, all of which do not rely on registered accounts and networks
+Key features
+- East to install - Beam can be installed by plugging into a printer’s USB-enabled serial connection and data cable to SD card slow. This means no opening up the printer and complicated wiring. Anyone can do it.
+- Easy to set up - Beam can be set up to connect user network by simply running the desktop application, entering network credentials, and exporting the setting to sd card. 
+- Beam has good compatibility with printers due to Beam only relying on serial connection for control and monitor and utilizing the high bandwidth SD I/O for transfer.
+Faster and more reliable printing via Beam’s unique SD Card I/O bridge to printer
+- Beam works with or without an external internet connection, and functionalities can be realized via BeamManager
+- Easy to manage multiple printers with a single software control point
+- Affordable hardware cost. No need to acquire a Pi for every printer
+- Email Notification via BeamManger 
+- Future Expandability with Beam Camera and Machine Vision for Failure Detection via BeamManager
+- Provide simple RestfulAPI to allow other software control (such as postman debugging tools)
+- Beam includes extended interfaces (IIC, UART, SLR control circuit) to work with ESP32-Camera. This allows for time-lapse photography production, taking photos according to the progress and email reminders, PC local printing failure detection, and smoke flame detection, all of which do not rely on registered accounts and networks.
 
-In order to better realize its own functions, Beam has developed its own electronic hardware and established an open source community. Customized hardware can enable users to get a better experience, rather than pieced together functions. Beam is a complete solution. The combination of software and hardware is more harmonious. Only when both are taken into account at the same time can the out-of-the-box experience be achieved.
 
 ### 2.Why Beam?
 
-Why do we do the Beam project? In summary, there are several reasons:
+When we first look at adding WiFi control to our 3D printers, there are already excellent choices, such as the wonderful Octoprint project run by our good friend Gina with great plugins and communities. Octoprint controls and transfers via serial connection only, which is limited by the speed of the connection and firmware compatibility issues. 
 
-- The requirements for installing and using Octoprint on Raspberry Pi are still very high for most people.
-- We don’t want to disassemble the machine and then wire it so that the 3D printer has some additional functions
-- We don't want to use the cloud server to monitor and upload our print files to other people's servers
-- Raspberry Pi is not cheap. When there are multiple printers, the workload is multiple times.
-- When we have multiple 3D printers of different models and manufacturers, it is very troublesome to manage them uniformly
-- Cloud as a Service is expensive, especially for AI inference servers. We hope to use the monitoring function, using the local PC CPU resources to achieve AI monitoring technology
+We want to challenge ourselves to see if there is a leaner, MCU based solution that can achieve these goals:
 
-Using Beam, you can perfectly avoid the problems listed above and implement Plug & Play.
+- Allows for faster print speed than serial connection, which is needed for newer printers, especially CoreXY Printer
+- More compatibility with different printers
+- Easy to install, especially for users who are new to 3D printing
+- Simple to set up and manage a fleet of printers.
+- Robust operation such that the device can be powered off immediately and does not rely on an Internet connection to function
 
-## 3. Quick start
+
+To meet the above goals, we needed a tightly integrated solution that requires hardware that does not exist on the market. This led us to develop Beam’s ESP32 based board and the open-source firmware.  We also designed the unique SD Bridge that allows Beam to transfer GCode via high-speed SD I/O while controlling/monitoring via the serial connection.
+
+## 3. Instructions for use
 
 ### 3.1 The network requirements of the host computer
 
@@ -55,7 +58,7 @@ Please make sure you have 2.4G network, ESP32 can only connect 2.4G wifi at pres
 
 ### 3.2 Quick start
 
-1. Distribution network
+1. Network Configuration
 
 After inserting the SD card, configure the SD card
 
@@ -67,7 +70,7 @@ After inserting the SD card, configure the SD card
 
 3. Control printing
 
-Control panel and upload files:
+Control panel.
 
 ![ Img ](./Images/gif/3.control-pannel.gif)
 
@@ -77,19 +80,19 @@ Control panel and upload files:
 
 5. Mail configuration
 
-The mail can be configured to print out the percentage, take a picture, and send a reminder email to the specified mailbox. Printing failure reminder is when the software detects the probability of printing failure, send an email to notify the user (with Camera shooting).
+Email can configure the percentage of each printing completed, take a picture, and send a reminder mail to the designated mailbox. Printing failure reminder is when the software detects the probability of printing failure, it will send an email to notify the user (cooperate with Camera shooting).
 
 ![ Img ](./Images/email.png)
 
 ## 4.Beam-API
 
-Beam provides the core API to allow more platforms to access his control. Below is a list of the APIs that Beam already includes and how to use them.[API docs](./FP-BeamAPI.md)
+Beam provides core APIs to enable more platforms to access him for control. Listed below are the APIs already included in Beam and their specific usage.[API docs](./FP-BeamAPI.md)
 
 ## 5.How to update Beam-ESP32 firmware
 
 1. Download [flash tool](https://github.com/fiberpunk1/Beam-ESP32/releases/download/Beta-v0.1.0/BeamFlash-Installer.exe)
 2. On the Beam-ESP32 release page, download the first .bin file
-3. Burn the firmware in the order shown in the figure below:
+3. Burn the firmware in the order shown in the following figure:
 
 ![ Img ](./Images/update-bin.png)
 
