@@ -15,7 +15,7 @@
 
 ## 2. Beam Project Introduction
 <div align=center>
-<img src="./Images/hardware.jpg" width=600 />
+<img src="./Images/beam-on-ender3.jpg" width=800 />
 </div>
 
 ### 2.1 What is Beam?
@@ -48,6 +48,9 @@ We want to challenge ourselves to see if there is a leaner, MCU based solution t
 - Simple to set up and manage a fleet of printers.
 - Robust operation such that the device can be powered off immediately and does not rely on an Internet connection to function
 
+<div align=center>
+<img src="./Images/board-2.jpg" width=600 />
+</div>
 
 To meet the above goals, we needed a tightly integrated solution that requires hardware that does not exist on the market. This led us to develop Beam’s ESP32 based board and the open-source firmware.  We also designed the unique SD Bridge that allows Beam to transfer GCode via high-speed SD I/O while controlling/monitoring via the serial connection.
 
