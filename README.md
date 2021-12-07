@@ -38,7 +38,7 @@ Faster and more reliable printing via Beam’s unique SD Card I/O bridge to prin
 
 ### 2.Why Beam?
 
-When we first look at adding WiFi control to our 3D printers, there are already excellent choices, such as the wonderful Octoprint project run by our good friend Gina with great plugins and communities. Octoprint controls and transfers via serial connection only, which is limited by the speed of the connection and firmware compatibility issues. 
+When we first look at adding WiFi control to our 3D printers, there are already excellent choices, such as the wonderful [Octoprint](https://github.com/OctoPrint/OctoPrint) project run by our good friend Gina with great plugins and [communities](https://octoprint.org/). Octoprint controls and transfers via serial connection only, which is limited by the speed of the connection and firmware compatibility issues. 
 
 We want to challenge ourselves to see if there is a leaner, MCU based solution that can achieve these goals:
 
