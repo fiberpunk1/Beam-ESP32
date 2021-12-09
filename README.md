@@ -100,7 +100,7 @@ Email can configure the percentage of each printing completed, take a picture, a
 
 ## 4.Beam-API
 
-Beam provides core APIs to enable more platforms(Such as Octoprint(https://github.com/OctoPrint/OctoPrint),BeamManager, or postman tools) to access him for control. Listed below are the APIs already included in Beam and their specific usage.[API docs](./FP-BeamAPI.md)
+Beam provides core APIs to enable more platforms(Such as [Octoprint](https://github.com/OctoPrint/OctoPrint),BeamManager, or postman tools) to access him for control. Listed below are the APIs already included in Beam and their specific usage.[API docs](./FP-BeamAPI.md)
 
 ## 5.How to update Beam-ESP32 firmware
 
