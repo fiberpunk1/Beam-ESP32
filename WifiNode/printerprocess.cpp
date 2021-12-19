@@ -25,24 +25,12 @@ void readPrinterBack()
   {
     if(inData.length()>=2)
     {
-      writeLog("Receive:");
+      writeLog("Beam-"+cf_node_name+":");
       writeLog(inData); 
       if(inData.indexOf("setusb")!=-1)
       {
         rst_usb = true;
       } 
-      if(inData.indexOf("paused for")!=-1)
-      {
-        if(g_status==PRINTING)
-        {
-          paused_for_user = true;
-        }
-      }
-      if(inData.indexOf("SD printing")!=-1)
-      {
-        current_layers = inData;
-      } 
-
       //check temp
       if (inData.indexOf("T:")!=-1)
       {
@@ -73,23 +61,41 @@ void readPrinterBack()
         current_usb_status = 0;
       }
 
-      if(inData.indexOf("X:")!=-1)
+      if(g_status==PRINTING)
       {
-        String capture_cmd = "Camera-"+cf_node_name+"-TakeImg";
-        sendHttpMsg(capture_cmd);
-      }
-       
-      if(inData.indexOf("Finish")!=-1)
-      {
-        cancleOrFinishPrint();
-        Serial.println(";Finish,this is the end of printing!!!");
-      }
+        if(inData.indexOf("paused for")!=-1)
+        {
+          paused_for_user = true;
+        }
 
-      if(inData.indexOf("Done")!=-1)
-      {
-        cancleOrFinishPrint();
-        Serial.println(";Done,this is the end of printing!!!");
+        if(inData.indexOf("SD printing")!=-1)
+        {
+          current_layers = inData;
+        } 
+        if(inData.indexOf("X:")!=-1)
+        {
+          String capture_cmd = "Camera-"+cf_node_name+"-TakeImg";
+          sendHttpMsg(capture_cmd);
+        }
+        
+        if(inData.indexOf("Finish")!=-1)
+        {
+          cancleOrFinishPrint();
+          Serial.println(";Finish,this is the end of printing!!!");
+        }
+        else if(inData.indexOf("Done")!=-1)
+        {
+          cancleOrFinishPrint();
+          Serial.println(";Done,this is the end of printing!!!");
+        }
+        if(inData.indexOf("No media")!=-1)
+        {
+          cancleOrFinishPrint();
+          Serial.println(";3D printer not find SD card!!!");
+        }
       }
+     
+
 
       inData="";
          

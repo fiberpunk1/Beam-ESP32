@@ -132,7 +132,7 @@ void WifiNode::init()
     digitalWrite(19, LOW);
 
     pinMode(18, OUTPUT);
-    digitalWrite(18, HIGH);//default beam
+    digitalWrite(18, LOW);//default beam
 
     pinMode(RED_LED, OUTPUT);
     pinMode(GREEN_LED, OUTPUT);

@@ -323,7 +323,8 @@ void cancleOrFinishPrint()
     current_temp = "";
     espGetSDCard();
     sendHttpMsg(finish_cmd);
-    socket_client.stop();
+    // if(socket_client.connected())
+    //   socket_client.stop();
 }
 
 void printerControl()
@@ -430,6 +431,8 @@ void printStart()
     {
       return returnFail("No file");
     }
+    reset559();
+    delay(500);
     espReleaseSD();
     delay(500);
     String path = server.arg("filename");
@@ -519,7 +522,7 @@ void espReleaseSD()
     pinMode(14, INPUT_PULLUP);
     pinMode(15, INPUT_PULLUP);
 
-    digitalWrite(18, LOW);  
+    digitalWrite(18, HIGH);  
     delay(500);
   
     //2.send gcode to marlin, init and reload the sd card
@@ -533,7 +536,7 @@ void espGetSDCard()
     //0. release sd from marlin
     sendCmdByPackage("M22\n");
     delay(500);
-    digitalWrite(18, HIGH); 
+    digitalWrite(18, LOW); 
 
     //1.初始化SD
     while(!SD_MMC.begin())

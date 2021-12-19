@@ -40,11 +40,10 @@ void writeLog(String);
 
 void writeLog(String log_txt)
 {
-    if(g_status==PRINTING)
+    // if(g_status==PRINTING)
     {
         sendHttpMsg(log_txt);
     }
-
 }
 
 void sendHttpMsg(String url)
@@ -64,7 +63,8 @@ void sendHttpMsg(String url)
         
     }
 #endif
-    socket_client.print(url);
+    if(socket_client.connected())
+        socket_client.print(url);
     
 }
 NodeConfig::NodeConfig()
