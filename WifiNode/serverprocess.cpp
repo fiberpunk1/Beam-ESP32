@@ -269,7 +269,7 @@ void handleNotFound()
 }
 void reportDevice()
 {
-  String ip = "Beam-"+cf_node_name + ":" + WiFi.localIP().toString();
+  String ip = "Beam:Beam-"+cf_node_name + ":" + WiFi.localIP().toString();
    if(g_status==PRINTING)
   {
     ip = ip + ":" + "PRINTING";

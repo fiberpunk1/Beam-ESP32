@@ -1,6 +1,6 @@
 #include "nodeconfig.h"
 
-WebServer server(80);
+WebServer server(88);
 HTTPClient http_client;
 WiFiClient socket_client;
 CRC8 gcrc;
