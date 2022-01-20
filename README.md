@@ -15,14 +15,14 @@
 
 ## 2. Beam Project Introduction
 <div align=center>
-<img src="./Images/beam-on-ender3.jpg" width=800 />
+<img src="./Images/BeamNexcus-ui.png" width=800 />
 </div>
 
 ### 2.1 What is Beam?
 
 Beam is an easy and affordable way to control and monitor 3D printers via WiFi, USB-enabled serial, and SD I/O. Beam is very robust and power-efficient as it runs on an MCU (ESP32) while still offering a wide range of functionalities.
 
-Key features
+**Key features:**
 - East to install - Beam can be installed by plugging into a printer’s USB-enabled serial connection and data cable to SD card slow. This means no opening up the printer and complicated wiring. Anyone can d v o it.
 - Easy to set up - Beam can be set up to connect user network by simply running the desktop application, entering network credentials, and exporting the setting to sd card. 
 - Beam has good compatibility with printers due to Beam only relying on serial connection for control and monitor and utilizing the high bandwidth SD I/O for transfer.
@@ -35,6 +35,9 @@ Faster and more reliable printing via Beam’s unique SD Card I/O bridge to prin
 - Provide simple RestfulAPI to allow other software control (such as postman debugging tools)
 - Beam includes extended interfaces (IIC, UART, SLR control circuit) to work with ESP32-Camera. This allows for time-lapse photography production, taking photos according to the progress and email reminders, PC local printing failure detection, and smoke flame detection, all of which do not rely on registered accounts and networks.
 
+<div align=center>
+<img src="./Images/1-3-1.jpg" width=800 />
+</div>
 
 ### 2.Why Beam?
 
