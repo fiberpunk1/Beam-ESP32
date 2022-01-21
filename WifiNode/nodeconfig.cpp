@@ -11,6 +11,7 @@ String pre_line="";
 String cf_ssid = "";
 String cf_password = "";
 String cf_node_name = "";
+unsigned int  cf_filament = 0;
 String total_layers = "";
 String current_layers = "";
 String current_temp = "";
@@ -26,6 +27,7 @@ bool recvl_ok = false;
 bool hasSD = false;
 bool rst_usb = false;
 bool paused_for_user = false;
+bool paused_for_filament = false;
 
 unsigned char current_usb_status = 0;
 unsigned char pre_usb_status = 0;

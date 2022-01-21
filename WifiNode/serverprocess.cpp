@@ -93,6 +93,7 @@ void deleteRecursive(String path)
 
   SD_MMC.rmdir((char *)path.c_str());
   file.close();
+  
 }
 
 void handleDelete() 
@@ -101,6 +102,7 @@ void handleDelete()
   {
     return returnFail("BAD ARGS");
   }
+  void espGetSDCard();
   // String path = server.arg(0);
   String path = server.arg("path");
   // DBG_OUTPUT_PORT.print(path);
@@ -111,6 +113,7 @@ void handleDelete()
   }
   deleteRecursive(path);
   returnOK();
+  void espReleaseSD();
 }
 
 void handleCreate() {
@@ -142,6 +145,7 @@ void handleCreate() {
 
 void printDirectory() 
 {
+  void espGetSDCard();
   if (!server.hasArg("dir")) 
   {
     return returnFail("BAD ARGS");
@@ -189,6 +193,7 @@ void printDirectory()
   }
   server.sendContent("]");
   dir.close();
+  espReleaseSD();
 }
 void sendCmdByPackageNow(String cmd)
 {
@@ -468,7 +473,6 @@ void ServerProcess::serverInit()
     String pre_line="";
         //log file
 
-
     File g_printfile;
     OP_STATUS g_status=P_IDEL;
     ERROR_CODE g_error=NORMAL;
@@ -564,6 +568,24 @@ void espGetSDCard()
     }  
 }
 
+void filament_detect()
+{
+  if((cf_filament==1)&&((!paused_for_filament)))
+  {
+    if(digitalRead(19)==HIGH)
+    {
+      delay(300);
+      if(digitalRead(19)==HIGH)  
+      {
+        sendCmdByPackage("M600 X0 Y0\n");
+        String filament_cmd = "Beam-"+cf_node_name+"-FilamentOut";
+        sendHttpMsg(filament_cmd);
+        paused_for_filament = true;
+      }
+    }  
+  }  
+}
+
 void ServerProcess::serverLoop()
 {
     server.handleClient();
@@ -577,6 +599,7 @@ void ServerProcess::serverLoop()
       digitalWrite(RED_LED, HIGH);
       digitalWrite(GREEN_LED, HIGH);
       digitalWrite(BLUE_LED, LOW);
+      filament_detect();
     }
     else
     {
@@ -584,7 +607,7 @@ void ServerProcess::serverLoop()
       digitalWrite(GREEN_LED, LOW);
       digitalWrite(BLUE_LED, HIGH);
     }
-    if(paused_for_user)
+    if(paused_for_user&&(!paused_for_filament))
     {
       paused_for_user = false;
       sendCmdByPackage("M108\n");

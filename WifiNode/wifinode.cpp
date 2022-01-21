@@ -6,6 +6,8 @@
 #include "nodeconfig.h"
 #include "rBase64.h"
 
+extern void espGetSDCard();
+extern void espReleaseSD();
 extern void reset559();
 extern void sendCmdByPackage(String cmd);
 extern void sendCmdByPackageNow(String cmd);
@@ -119,6 +121,7 @@ void WifiNode::checkwifi()
 void WifiNode::init()
 {
 	uint8_t pw_exist = 0;
+ String b_filament = "";
 	EEPROM.begin(256);
     //0.初始化串口和OLED屏
     PRINTER_PORT.begin(115200);
@@ -128,9 +131,12 @@ void WifiNode::init()
 
     pinMode(5, OUTPUT);
     digitalWrite(5, LOW);
-    pinMode(19, OUTPUT);
-    digitalWrite(19, LOW);
 
+    //faliment detector
+    pinMode(19, INPUT);
+
+
+    //SD switcher
     pinMode(18, OUTPUT);
     digitalWrite(18, LOW);//default beam
 
@@ -155,8 +161,8 @@ void WifiNode::init()
     //让打印机释放SD卡
     reset559();
     delay(1000);
-    sendCmdByPackageNow("G28\n");
-    delay(1000);
+//    sendCmdByPackageNow("G28\n");
+//    delay(1000);
     sendCmdByPackageNow("M22\n");
     delay(500);
     //1.初始化SD
@@ -223,6 +229,14 @@ void WifiNode::init()
         {
             cf_node_name = getValue(tmp_str, ':', 1);
         }
+
+        //filament
+        tmp_str = readConfig(config_file);
+        if (tmp_str.indexOf("filament_detect")!=-1)
+        {
+            b_filament = getValue(tmp_str, ':', 1);
+        }
+        
                
     }
     config_file.close();
@@ -238,6 +252,11 @@ void WifiNode::init()
         Write_String(9,90,cf_node_name);
         cf_node_name = Read_String(EEPROM.read(9),90);
         delay(100);
+
+        Write_String(13,120,b_filament);
+        b_filament = Read_String(EEPROM.read(13),120);
+        delay(50);
+        cf_filament = b_filament.toInt();
         
         SD_MMC.remove("/config.txt");
     }
@@ -248,7 +267,10 @@ void WifiNode::init()
         cf_password = Read_String(EEPROM.read(5),60);
         delay(100);
         cf_node_name = Read_String(EEPROM.read(9),90);
-       
+        delay(100);
+        b_filament = Read_String(EEPROM.read(13),120);
+        delay(100);
+        cf_filament = b_filament.toInt();
     }
     
     WiFi.mode(WIFI_STA);
@@ -294,6 +316,7 @@ void WifiNode::init()
     reset559();
     // camera_trigger();
     delay(500);
+    espReleaseSD();
 }
 
 void WifiNode::process()

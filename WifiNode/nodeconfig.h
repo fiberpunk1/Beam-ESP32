@@ -17,7 +17,7 @@
 #include "crc8.h"
 #include "FiberPunk_SSD1306.h"
 
-#define VERSION "2022-1-10-1007"
+#define VERSION "2022-1-21-1008"
 #define DBG_OUTPUT_PORT Serial
 #define PRINTER_PORT Serial
 #define RED_LED 26
@@ -59,6 +59,7 @@ extern File uploadFile;
 extern String cf_ssid;
 extern String cf_password;
 extern String cf_node_name;
+extern unsigned int cf_filament;
 extern String total_layers;
 extern String current_layers;
 extern String current_temp;
@@ -76,7 +77,7 @@ extern bool recv_ok;
 extern bool recvl_ok;
 extern bool rst_usb;
 extern bool paused_for_user;
-
+extern bool paused_for_filament;
 
 extern uint8_t cmd_length;
 

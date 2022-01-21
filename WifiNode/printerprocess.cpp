@@ -88,11 +88,17 @@ void readPrinterBack()
           cancleOrFinishPrint();
           Serial.println(";Done,this is the end of printing!!!");
         }
+        else if(inData.indexOf("resumed")!=-1)
+        {
+          paused_for_filament = false;  
+        }
+        
         if(inData.indexOf("No media")!=-1)
         {
           cancleOrFinishPrint();
           Serial.println(";3D printer not find SD card!!!");
         }
+        
       }
      
 
