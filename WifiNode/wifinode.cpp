@@ -6,6 +6,7 @@
 #include "nodeconfig.h"
 #include "rBase64.h"
 
+extern void hardwareReleaseSD();
 extern void espGetSDCard();
 extern void espReleaseSD();
 extern void reset559();
@@ -82,9 +83,10 @@ void message_display(String content)
     display.display();
    // text display tests
     display.setTextSize(1);
-    display.setCursor(0,15);
+    display.setCursor(0,8);
     display.print(content);
     display.display(); // actually display all of the above  
+  
 }
 
 void page_display(String content)
@@ -99,6 +101,7 @@ void page_display(String content)
     display.println(WiFi.localIP());
     display.println(content);
     display.display(); // actually display all of the above 
+    
 }
 
 WifiNode::WifiNode()
@@ -147,12 +150,13 @@ void WifiNode::init()
     digitalWrite(RED_LED, LOW);
     digitalWrite(GREEN_LED, HIGH);
     digitalWrite(BLUE_LED, HIGH);
-
+    display.setRotation(2);
     if(!display.begin(SSD1306_SWITCHCAPVCC, SCREEN_ADDRESS)) 
     {
         // DBG_OUTPUT_PORT.println(F("OLED SSD1306 allocation failed"));
         //for(;;); // Don't proceed, loop forever
     }
+    
     display.setTextColor(SSD1306_WHITE);
     display.display();
     delay(2000); // Pause for 2 seconds   
@@ -316,7 +320,9 @@ void WifiNode::init()
     reset559();
     // camera_trigger();
     delay(500);
-    espReleaseSD();
+    hardwareReleaseSD();
+    delay(2000);
+    espGetSDCard();
 }
 
 void WifiNode::process()
@@ -328,6 +334,9 @@ void WifiNode::process()
         if(current_usb_status)//connected
         {
             page_display("Printer Connected!");
+//            espReleaseSD();
+//            delay(5000);
+//            espGetSDCard();
         }
         else
         {

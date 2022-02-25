@@ -4,8 +4,10 @@
 
 
 const char* host = "EdgeeWifi";
+void hardwareReleaseSD();
 void espGetSDCard();
 void espReleaseSD();
+void espRestart();
 void reset559();
 void sendCmdByPackage(String cmd);
 void sendCmdByPackageNow(String cmd);
@@ -33,6 +35,7 @@ void handleFileUpload()
   {
     return;
   }
+//  espGetSDCard();
   HTTPUpload& upload = server.upload();
   if (upload.status == UPLOAD_FILE_START) 
   {
@@ -102,7 +105,7 @@ void handleDelete()
   {
     return returnFail("BAD ARGS");
   }
-  void espGetSDCard();
+//  void espGetSDCard();
   // String path = server.arg(0);
   String path = server.arg("path");
   // DBG_OUTPUT_PORT.print(path);
@@ -113,7 +116,7 @@ void handleDelete()
   }
   deleteRecursive(path);
   returnOK();
-  void espReleaseSD();
+//  void espReleaseSD();
 }
 
 void handleCreate() {
@@ -145,7 +148,8 @@ void handleCreate() {
 
 void printDirectory() 
 {
-  void espGetSDCard();
+//  void espGetSDCard();
+  delay(300);
   if (!server.hasArg("dir")) 
   {
     return returnFail("BAD ARGS");
@@ -193,7 +197,8 @@ void printDirectory()
   }
   server.sendContent("]");
   dir.close();
-  espReleaseSD();
+//  void espReleaseSD();
+
 }
 void sendCmdByPackageNow(String cmd)
 {
@@ -274,7 +279,7 @@ void handleNotFound()
 }
 void reportDevice()
 {
-  String ip = "Beam:Beam-"+cf_node_name + ":" + WiFi.localIP().toString();
+  String ip = "Beam:"+cf_node_name + ":" + WiFi.localIP().toString();
    if(g_status==PRINTING)
   {
     ip = ip + ":" + "PRINTING";
@@ -317,7 +322,7 @@ void resetUSBHost()
 
 void cancleOrFinishPrint()
 {
-    String finish_cmd = "Beam-"+cf_node_name+"-Finish";
+    String finish_cmd = "Beam:"+cf_node_name+":Finish";
     g_status = CANCLE;
     g_status = P_IDEL;
     recv_ok = false;
@@ -491,6 +496,7 @@ void ServerProcess::serverInit()
     server.on("/gcode", HTTP_GET, sendGcode);
     server.on("/pcsocket", HTTP_GET, getPCAddress);
     server.on("/resetusb",HTTP_GET,resetUSBHost);
+    server.on("/esprestart", HTTP_GET, espRestart);
 
     // server.on("/capture", HTTP_GET, testCaptureImage);
 
@@ -515,10 +521,9 @@ void ServerProcess::serverInit()
 
 }
 
-
-void espReleaseSD()
+void hardwareReleaseSD()
 {
-    //1.release SD card
+      //1.release SD card
     pinMode(2, INPUT_PULLUP);
     pinMode(4, INPUT_PULLUP);
     pinMode(12, INPUT_PULLUP);
@@ -527,12 +532,28 @@ void espReleaseSD()
     pinMode(15, INPUT_PULLUP);
 
     digitalWrite(18, HIGH);  
+    delay(500);  
+    SD_MMC.end();  
+}
+
+void espReleaseSD()
+{
+    //1.release SD card
+//    pinMode(2, INPUT_PULLUP);
+//    pinMode(4, INPUT_PULLUP);
+//    pinMode(12, INPUT_PULLUP);
+//    pinMode(13, INPUT_PULLUP);
+//    pinMode(14, INPUT_PULLUP);
+//    pinMode(15, INPUT_PULLUP);
+
+    SD_MMC.end();  
+    digitalWrite(18, HIGH);  
     delay(500);
-  
+    
     //2.send gcode to marlin, init and reload the sd card
     sendCmdByPackage("M21\n");
     delay(500);  
-    SD_MMC.end();  
+    
 }
 
 void espGetSDCard()
@@ -541,9 +562,10 @@ void espGetSDCard()
     sendCmdByPackage("M22\n");
     delay(500);
     digitalWrite(18, LOW); 
-
+    delay(500);
     //1.初始化SD
-    while(!SD_MMC.begin())
+    int sd_get_count = 0;
+    while((!SD_MMC.begin())&&(sd_get_count<5))
     {
         digitalWrite(RED_LED, LOW);
         digitalWrite(GREEN_LED, HIGH);
@@ -554,6 +576,7 @@ void espGetSDCard()
         digitalWrite(GREEN_LED, HIGH);
         digitalWrite(BLUE_LED, HIGH);  
         delay(500);
+        sd_get_count++;
         //break;      
     } 
     digitalWrite(RED_LED, HIGH);
@@ -584,6 +607,11 @@ void filament_detect()
       }
     }  
   }  
+}
+void espRestart()
+{
+   ESP.restart(); 
+   returnOK();
 }
 
 void ServerProcess::serverLoop()

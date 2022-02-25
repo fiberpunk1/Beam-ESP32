@@ -430,10 +430,10 @@ bool FiberPunk_SSD1306::begin(uint8_t vcs, uint8_t addr, bool reset,
 
   clearDisplay();
   if (HEIGHT > 32) {
-    drawBitmap((WIDTH - splash1_width) / 2, (HEIGHT - splash1_height) / 2,
+    drawBitmap(((WIDTH - splash1_width) / 2), (HEIGHT - splash1_height) / 2,
                splash1_data, splash1_width, splash1_height, 1);
   } else {
-    drawBitmap((WIDTH - splash2_width) / 2, (HEIGHT - splash2_height) / 2,
+    drawBitmap(((WIDTH - splash2_width) / 2)-8, (HEIGHT - splash2_height) / 2,
                logo_data, logo_width, logo_height, 1);
   }
 
