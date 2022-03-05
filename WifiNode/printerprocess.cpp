@@ -25,8 +25,9 @@ void readPrinterBack()
   {
     if(inData.length()>=2)
     {
-      writeLog("Beam-"+cf_node_name+":");
+      writeLog(cf_node_name+":");
       writeLog(inData); 
+      events.send(inData.c_str(), "gcode_cli");
       if(inData.indexOf("setusb")!=-1)
       {
         rst_usb = true;
@@ -100,11 +101,7 @@ void readPrinterBack()
         }
         
       }
-     
-
-
-      inData="";
-         
+      inData="";  
     }
     else
     {

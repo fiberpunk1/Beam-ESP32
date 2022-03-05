@@ -5,19 +5,22 @@
 #include <WiFi.h>
 #include <HTTPClient.h>
 #include <WebServer.h>
+#include <AsyncTCP.h>
+#include <ESPAsyncWebServer.h>
 #include <SPI.h>
 #include <Wire.h>
 #include <Arduino.h>
 #include <SD_MMC.h>
 #include <FS.h>
 #include <EEPROM.h>
+#include "SPIFFS.h"
 
 #include "cmdfifo.h"
 #include "gcodefifo.h"
 #include "crc8.h"
 #include "FiberPunk_SSD1306.h"
 
-#define VERSION "2022-2-25-1009"
+#define VERSION "2022-3-5-2000"
 #define DBG_OUTPUT_PORT Serial
 #define PRINTER_PORT Serial
 #define RED_LED 26
@@ -48,13 +51,13 @@ enum ERROR_CODE
   OPEN_FAILED=1,
 };
 
-extern WebServer server;
+extern AsyncWebServer server;
+extern AsyncEventSource events;
 // extern HTTPClient http_client;
 extern WiFiClient socket_client;
 extern CRC8 gcrc;
 
 extern File uploadFile;
-
 
 extern String cf_ssid;
 extern String cf_password;

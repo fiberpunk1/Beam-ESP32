@@ -132,6 +132,11 @@ void WifiNode::init()
     PRINTER_PORT.setRxBufferSize(512);
     PRINTER_PORT.setDebugOutput(true);
 
+  if(!SPIFFS.begin(true)){
+    Serial.println("SPIFFS Mount Failed");
+    return;
+   }
+
     pinMode(5, OUTPUT);
     digitalWrite(5, LOW);
 
@@ -221,11 +226,12 @@ void WifiNode::init()
         if(tmp_str.indexOf("pass_word")!=-1)
         {
             pw_exist = 1; 
-            tmp_str = getValue(tmp_str, ':', 1);
-            if(rbase64.decode(tmp_str)==RBASE64_STATUS_OK)
-            {
-                cf_password = rbase64.result();
-            }    
+            cf_password = getValue(tmp_str, ':', 1);
+
+            // if(rbase64.decode(tmp_str)==RBASE64_STATUS_OK)
+            // {
+            //     cf_password = rbase64.result();
+            // }    
         }
         //device name
         tmp_str = readConfig(config_file);
@@ -281,6 +287,7 @@ void WifiNode::init()
 
     WiFi.persistent(false); 
     WiFi.setAutoConnect(false);
+    WiFi.setHostname(cf_node_name.c_str());
 
     WiFi.begin((const char*)cf_ssid.c_str(), (const char*)cf_password.c_str());
 
@@ -334,13 +341,13 @@ void WifiNode::process()
         if(current_usb_status)//connected
         {
             page_display("Printer Connected!");
-//            espReleaseSD();
-//            delay(5000);
-//            espGetSDCard();
         }
         else
         {
+            String pub_msg = "offline";
             page_display("Printer Not Connect!");
+            writeLog(cf_node_name+":offline");
+            events.send(pub_msg.c_str(), "gcode_cli");
         }
         
         pre_usb_status = current_usb_status;

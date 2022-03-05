@@ -14,8 +14,10 @@
 - Dependencies: Espressif System 1.0.6
 
 ## 2. Beam Project Introduction
+
+**PC Client:**
 <div align=center>
-<img src="./Images/BeamNexcus-ui.png" width=800 />
+<img src="./Images/BeamNexus.png" width=800 />
 </div>
 
 ### 2.1 What is Beam?
@@ -23,8 +25,8 @@
 Beam is an easy and affordable way to control and monitor 3D printers via WiFi, USB-enabled serial, and SD I/O. Beam is very robust and power-efficient as it runs on an MCU (ESP32) while still offering a wide range of functionalities.
 
 **Key features:**
-- East to install - Beam can be installed by plugging into a printer’s USB-enabled serial connection and data cable to SD card slow. This means no opening up the printer and complicated wiring. Anyone can d v o it.
-- Easy to set up - Beam can be set up to connect user network by simply running the desktop application, entering network credentials, and exporting the setting to sd card. 
+- East to install - Beam can be installed by plugging into a printer’s USB-enabled serial connection and data cable to SD card slow. This means no opening up the printer and complicated wiring.
+- Easy to set up - Beam can be set up to connect user network by simply running the desktop application or use web page, entering network credentials, and exporting the setting to sd card. 
 - Beam has good compatibility with printers due to Beam only relying on serial connection for control and monitor and utilizing the high bandwidth SD I/O for transfer.
 Faster and more reliable printing via Beam’s unique SD Card I/O bridge to printer
 - Beam works with or without an external internet connection, and functionalities can be realized via BeamManager
@@ -35,8 +37,22 @@ Faster and more reliable printing via Beam’s unique SD Card I/O bridge to prin
 - Provide simple RestfulAPI to allow other software control (such as postman debugging tools)
 - Beam includes extended interfaces (IIC, UART, SLR control circuit) to work with ESP32-Camera. This allows for time-lapse photography production, taking photos according to the progress and email reminders, PC local printing failure detection, and smoke flame detection, all of which do not rely on registered accounts and networks.
 
+**Nexus's local printing failure detection:**
+
 <div align=center>
 <img src="./Images/1-3-1.jpg" width=800 />
+</div>
+
+**Node's lite web UI:**
+
+<div align=center>
+<img src="./Images/NodeWebUI.png" width=800 />
+</div>
+
+**Node installed in Ender3-v2:**
+
+<div align=center>
+<img src="./Images/ender3case.jpg" width=800 />
 </div>
 
 ### 2.Why Beam?
@@ -57,55 +73,12 @@ We want to challenge ourselves to see if there is a leaner, MCU based solution t
 
 To meet the above goals, we needed a tightly integrated solution that requires hardware that does not exist on the market. This led us to develop Beam’s ESP32 based board and the open-source firmware.  We also designed the unique SD Bridge that allows Beam to transfer GCode via high-speed SD I/O while controlling/monitoring via the serial connection.
 
-## 3. Instructions for use
 
-### 3.1 The network requirements of the host computer
-
-Please make sure you have 2.4G network, ESP32 can only connect 2.4G wifi at present. In addition, 360 or some antivirus software, the computer set static IP, VPN, etc., will have an impact on the device search. If you want to use an automated search device, make sure that your computer's IP network segment is consistent with the router's network segment.
-
-### 3.2 Quick start
-
-**1.Network Configuration**
-
-After inserting the SD card, configure the SD card
-
-<div align=center>
-<img src="./Images/gif/1.config.gif" width=500 />
-</div>
-
-**2.LAN device scanning**
-
-<div align=center>
-<img src="./Images/gif/2.find-devices.gif" width=500 />
-</div>
-
-**3.Control printing**
-
-Control panel.
-
-<div align=center>
-<img src="./Images/gif/3.control-pannel.gif" width=500 />
-</div>
-
-**4.Print**
-
-<div align=center>
-<img src="./Images/gif/5.print.gif" width=500 />
-</div>
-
-**5.Mail configuration**
-
-Email can configure the percentage of each printing completed, take a picture, and send a reminder mail to the designated mailbox. Printing failure reminder is when the software detects the probability of printing failure, it will send an email to notify the user (cooperate with Camera shooting).
-
-<div align=center>
-<img src="./Images/email.png" width=300 />
-</div>
-
-## 4.Beam-API
+## 3.Beam-API
 
 Beam provides core APIs to enable more platforms(Such as [Octoprint](https://github.com/OctoPrint/OctoPrint),BeamManager, or postman tools) to access him for control. Listed below are the APIs already included in Beam and their specific usage.[API docs](./FP-BeamAPI.md)
 
-## 5.How to update Beam-ESP32 firmware
+## 4.How to update Beam-ESP32 firmware
 
 1. Download [flash tool](https://github.com/fiberpunk1/Beam-ESP32/releases/download/Beta-v0.1.0/BeamFlash-Installer.exe)
 2. On the Beam-ESP32 release page, download the first .bin file

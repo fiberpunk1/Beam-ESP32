@@ -2,64 +2,107 @@
 #include "printerprocess.h"
 #include "nodeconfig.h"
 
-
 const char* host = "EdgeeWifi";
 void hardwareReleaseSD();
 void espGetSDCard();
 void espReleaseSD();
-void espRestart();
 void reset559();
 void sendCmdByPackage(String cmd);
 void sendCmdByPackageNow(String cmd);
 void cancleOrFinishPrint();
 
-void returnOK() 
-{
-  server.send(200, "text/plain", "ok");
+void notFound(AsyncWebServerRequest *request) {
+    request->send(404, "text/plain", "Not found");
 }
 
-void returnFail(String msg) 
-{
-  server.send(500, "text/plain", msg + "\r\n");
+void returnOK(AsyncWebServerRequest *request){
+  request->send(200, "text/plain", "ok");
 }
 
-bool loadFromSdCard(String path) 
-{
+//void returnFail(String msg) 
+//{
+//  server.send(500, "text/plain", msg + "\r\n");
+//}
+void eventHandle(AsyncEventSourceClient *client){
+      if(client->lastId()){
+      Serial.printf("Client reconnected! Last message ID that it got is: %u\n", client->lastId());
+    }
+    client->send("hello! I get you data", NULL, millis(), 10000);
+}
+
+bool loadFromSdCard(String path, AsyncWebServerRequest *request) {
+  String dataType = "text/plain";
+  if (path.endsWith("/")) {
+    path += "index.htm";
+  }
+
+  if (path.endsWith(".src")) {
+    path = path.substring(0, path.lastIndexOf("."));
+  } else if (path.endsWith(".htm")) {
+    dataType = "text/html";
+  } else if (path.endsWith(".css")) {
+    dataType = "text/css";
+  } else if (path.endsWith(".js")) {
+    dataType = "application/javascript";
+  } else if (path.endsWith(".png")) {
+    dataType = "image/png";
+  } else if (path.endsWith(".gif")) {
+    dataType = "image/gif";
+  } else if (path.endsWith(".jpg")) {
+    dataType = "image/jpeg";
+  } else if (path.endsWith(".ico")) {
+    dataType = "image/x-icon";
+  } else if (path.endsWith(".xml")) {
+    dataType = "text/xml";
+  } else if (path.endsWith(".pdf")) {
+    dataType = "application/pdf";
+  } else if (path.endsWith(".zip")) {
+    dataType = "application/zip";
+  }
+
+  File dataFile = SPIFFS.open(path.c_str());
+  if (dataFile.isDirectory()) {
+    path += "/index.htm";
+    dataType = "text/html";
+    dataFile = SPIFFS.open(path.c_str());
+  }
+
+  if (!dataFile) {
+    return false;
+  }
+  request->send(dataFile, path, dataType); 
   return true;
 }
 
 
-void handleFileUpload() 
-{
-  if (server.uri() != "/edit") 
-  {
+void handleFileUpload(AsyncWebServerRequest *request, String filename, size_t index, uint8_t *t_data, size_t len, bool final){
+  if (request->url() != "/edit") {
     return;
   }
-//  espGetSDCard();
-  HTTPUpload& upload = server.upload();
-  if (upload.status == UPLOAD_FILE_START) 
-  {
-    if (SD_MMC.exists((char *)upload.filename.c_str())) 
-    {
-      SD_MMC.remove((char *)upload.filename.c_str());
+  //start
+  if (!index) {
+    if (SD_MMC.exists((char *)filename.c_str())) {
+      SD_MMC.remove((char *)filename.c_str());
     }
-    uploadFile = SD_MMC.open(upload.filename.c_str(), FILE_WRITE);
-    // DBG_OUTPUT_PORT.print("Upload: START, filename: "); DBG_OUTPUT_PORT.println(upload.filename);
+    uploadFile = SD_MMC.open(filename.c_str(), FILE_WRITE);
+    DBG_OUTPUT_PORT.print("Upload: START, filename: "); DBG_OUTPUT_PORT.println(filename);
   } 
-  else if (upload.status == UPLOAD_FILE_WRITE) 
-  {
-    if (uploadFile) 
-    {
-      uploadFile.write(upload.buf, upload.currentSize);
+
+  //write
+  if (len) {
+    if (uploadFile) {
+      uploadFile.write(t_data, len);
     }
-    // DBG_OUTPUT_PORT.print("Upload: WRITE, Bytes: "); DBG_OUTPUT_PORT.println(upload.currentSize);
-  } else if (upload.status == UPLOAD_FILE_END) 
-  {
-    if (uploadFile) 
-    {
+    DBG_OUTPUT_PORT.print("Upload: WRITE, Bytes: "); DBG_OUTPUT_PORT.println(len);
+  }
+
+  //finish
+  if (final){
+    if (uploadFile) {
       uploadFile.close();
     }
-    // DBG_OUTPUT_PORT.print("Upload: END, Size: "); DBG_OUTPUT_PORT.println(upload.totalSize);
+    String logmessage = "Upload Complete: " + String(filename) + ",size: " + String(index + len);
+    DBG_OUTPUT_PORT.print(logmessage); 
   }
 }
 
@@ -70,135 +113,74 @@ void deleteRecursive(String path)
   {
     file.close();
     SD_MMC.remove((char *)path.c_str());
-    return;
   }
-
-  file.rewindDirectory();
-  while (true) 
-  {
-    File entry = file.openNextFile();
-    if (!entry) 
-    {
-      break;
-    }
-    String entryPath = path + "/" + entry.name();
-    if (entry.isDirectory()) 
-    {
-      entry.close();
-      deleteRecursive(entryPath);
-    } else 
-    {
-      entry.close();
-      SD_MMC.remove((char *)entryPath.c_str());
-    }
-    yield();
-  }
-
-  SD_MMC.rmdir((char *)path.c_str());
-  file.close();
   
 }
 
-void handleDelete() 
-{
-  if (server.args() == 0) 
-  {
-    return returnFail("BAD ARGS");
+void handlerRemove(AsyncWebServerRequest *request) {
+    Serial.println("HANDLE DELETE");
+  if (!request->hasArg("path")) {
+    request->send(500, "text/plain", "BAD ARGS");
+    Serial.println("no path arg");
   }
-//  void espGetSDCard();
-  // String path = server.arg(0);
-  String path = server.arg("path");
-  // DBG_OUTPUT_PORT.print(path);
-  if (path == "/" || !SD_MMC.exists((char *)path.c_str())) 
-  {
-    returnFail("No SD Card");
-    return;
+  else{
+      AsyncWebParameter* p = request->getParam(0);
+      String path = p->value();
+      
+      if (path == "/" || !SD_MMC.exists((char *)path.c_str())) {
+        request->send(500, "text/plain", "BAD PATH");
+        Serial.println("path not exists");
+      }else{
+        deleteRecursive(path);
+        Serial.println("send ok"); 
+
+        request->send(200, "text/plain", "ok");
+      }
   }
-  deleteRecursive(path);
-  returnOK();
-//  void espReleaseSD();
 }
 
-void handleCreate() {
-  if (server.args() == 0) 
-  {
-    return returnFail("BAD ARGS");
-  }
-  String path = server.arg(0);
-  if (path == "/" || SD_MMC.exists((char *)path.c_str())) 
-  {
-    returnFail("No SD Card");
-    return;
-  }
 
-  if (path.indexOf('.') > 0) {
-    File file = SD_MMC.open((char *)path.c_str(), FILE_WRITE);
-    if (file) 
-    {
-      file.write(0);
-      file.close();
-    }
-  } 
-  else 
-  {
-    SD_MMC.mkdir((char *)path.c_str());
-  }
-  returnOK();
-}
+void printDirectory(AsyncWebServerRequest * request) {
 
-void printDirectory() 
-{
-//  void espGetSDCard();
-  delay(300);
-  if (!server.hasArg("dir")) 
-  {
-    return returnFail("BAD ARGS");
+  int params = request->params();
+  if (params == 0) {
+    request->send(500, "text/plain","BAD ARGS");
   }
-  String path = server.arg("dir");
-  if (path != "/" && !SD_MMC.exists((char *)path.c_str())) 
-  {
-    return returnFail("No SD Card!");
+  AsyncWebParameter* p = request->getParam(0);
+  String path = p->value();
+
+  if (path != "/" && !SD_MMC.exists((char *)path.c_str())) {
+    request->send(500, "text/plain","BAD PATH");
   }
   File dir = SD_MMC.open((char *)path.c_str());
   path = String();
-  if (!dir.isDirectory()) 
-  {
+  if (!dir.isDirectory()) {
     dir.close();
-    return returnFail("NOT DIR");
+    request->send(500, "text/plain", "NOT DIR");
   }
   dir.rewindDirectory();
-  server.setContentLength(CONTENT_LENGTH_UNKNOWN);
-  server.send(200, "text/json", "");
-  WiFiClient client = server.client();
+  
 
-  server.sendContent("[");
-  for(int cnt = 0; true; ++cnt)
-   {
+  String output = "[";
+  for (int cnt = 0; true; ++cnt) {
     File entry = dir.openNextFile();
-    if(!entry) 
-    {
+    if (!entry) {
       break;
     }
-
-    String output;
-    if(cnt > 0)
-    {
-      output = ',';
+    if (cnt > 0) {
+      output += ',';
     }
-
     output += "{\"type\":\"";
     output += (entry.isDirectory()) ? "dir" : "file";
     output += "\",\"name\":\"";
     output += entry.name();
     output += "\"";
     output += "}";
-    server.sendContent(output);
     entry.close();
   }
-  server.sendContent("]");
+  output += "]";
+  request->send(200, "text/json", output);
   dir.close();
-//  void espReleaseSD();
-
 }
 void sendCmdByPackageNow(String cmd)
 {
@@ -249,49 +231,39 @@ void sendCmdByPackage(String cmd)
       //PRINTER_PORT.print(sendgc);
       PRINTER_PORT.flush();
   }
-  else
-  {
-    returnFail("NO PRINTER");
-  }
 
 }
 
-void handleNotFound() 
-{
-  if (hasSD && loadFromSdCard(server.uri())) 
-  {
+void handleNotFound(AsyncWebServerRequest *request) {
+  if (hasSD && loadFromSdCard(request->url(), request)) {
     return;
   }
   String message = "SDCARD Not Detected\n\n";
   message += "URI: ";
-  message += server.uri();
+  message += request->url();
   message += "\nMethod: ";
-  message += (server.method() == HTTP_GET) ? "GET" : "POST";
+  message += (request->method() == HTTP_GET) ? "GET" : "POST";
   message += "\nArguments: ";
-  message += server.args();
   message += "\n";
-  for (uint8_t i = 0; i < server.args(); i++) 
-  {
-    message += " NAME:" + server.argName(i) + "\n VALUE:" + server.arg(i) + "\n";
-  }
-  server.send(404, "text/plain", message);
-  // DBG_OUTPUT_PORT.print(message);
+  request->send(404, "text/plain", message);
+  DBG_OUTPUT_PORT.print(message);
 }
-void reportDevice()
+
+void reportDevice(AsyncWebServerRequest *request)
 {
   String ip = "Beam:"+cf_node_name + ":" + WiFi.localIP().toString();
    if(g_status==PRINTING)
   {
     ip = ip + ":" + "PRINTING";
   }
-  server.send(200, "text/plain",ip);
+  request->send(200, "text/plain",ip);
 }
-void reportVersion()
+void reportVersion(AsyncWebServerRequest *request)
 {
   String version = "version:"+String(VERSION);
-  server.send(200, "text/plain",version);
+  request->send(200, "text/plain",version);
 }
-void printerStatus()
+void printerStatus(AsyncWebServerRequest *request)
 {
   sendCmdByPackage("M105\n");
   delay(200);
@@ -299,9 +271,10 @@ void printerStatus()
   {
     sendCmdByPackage("M27\n");
     delay(200);
+    sendCmdByPackage("M27 C\n");
   }
   String result = current_temp+","+current_bed_temp+","+current_layers; 
-  server.send(200, "text/plain",result);
+  request->send(200, "text/plain",result);
 }
 
 void reset559()
@@ -314,10 +287,10 @@ void reset559()
 }
 
 
-void resetUSBHost()
+void resetUSBHost(AsyncWebServerRequest *request)
 {
   reset559();
-  returnOK();
+  request->send(200, "text/plain","ok");
 }
 
 void cancleOrFinishPrint()
@@ -337,135 +310,157 @@ void cancleOrFinishPrint()
     //   socket_client.stop();
 }
 
-void printerControl()
+void printerControl(AsyncWebServerRequest *request)
 {
-  if (!server.hasArg("op")) 
+  if (!request->hasArg("op")) 
   {
-    return returnFail("No Command");
-  }
-  String op = server.arg("op");
-
-  if(current_usb_status)
-  {
-      if(op=="PAUSE")
-      {
-        g_status = PAUSE;
-        sendCmdByPackage("M0\n");
-
-      }
-      else if(op=="CANCLE")
-      {
-        cancleOrFinishPrint();
-      }
-      else if(op=="RECOVER")
-      {
-        if(g_status == PAUSE)
-        {
-          g_status = PRINTING;
-          // PRINTER_PORT.print("G4 S1.0\n");
-          sendCmdByPackage("M108\n");
-        }
-
-      }
-      else if(op=="GETSD")
-      {
-        espGetSDCard();
-      }
-      else if(op=="RELEASESD")
-      {
-        espReleaseSD();
-      }
-      returnOK();
+    request->send(500, "text/plain", "No Command");
   }
   else
   {
-    returnFail("NO PRINTER");
+      AsyncWebParameter* p = request->getParam(0);
+      String op = p->value();
+
+      if(current_usb_status)
+      {
+          if(op=="PAUSE")
+          {
+            g_status = PAUSE;
+            sendCmdByPackage("M0\n");
+
+          }
+          else if(op=="CANCLE")
+          {
+            cancleOrFinishPrint();
+          }
+          else if(op=="RECOVER")
+          {
+            if(g_status == PAUSE)
+            {
+              g_status = PRINTING;
+              // PRINTER_PORT.print("G4 S1.0\n");
+              sendCmdByPackage("M108\n");
+            }
+
+          }
+          else if(op=="GETSD")
+          {
+            espGetSDCard();
+          }
+          else if(op=="RELEASESD")
+          {
+            espReleaseSD();
+          }
+          request->send(200, "text/plain","ok");
+      }
+      else
+      {
+        request->send(500, "text/plain","NO PRINTER");
+      }
   }
+  
+  
+ 
   
 
 
 }
 
-void getPCAddress()
+void getPCAddress(AsyncWebServerRequest *request)
 {
-    if (!server.hasArg("ip")) 
+    if (!request->hasArg("ip")) 
     {
-        return returnFail("BAD ARGS");
-    }
-    pc_ipaddress = server.arg("ip");
-    if (!socket_client.connect(pc_ipaddress.c_str(), 1688)) 
-    {
-        return returnFail("Connect PC failed!");
-    }
-
-    returnOK();
-}
-
-
-void sendGcode()
-{
-  if(current_usb_status)
-  {
-    if (!server.hasArg("gc")) 
-    {
-        return returnFail("No ARGS");
-    }
-    String op = server.arg("gc")+"\n";
-    if(op.startsWith("G0"))
-    {
-      sendCmdByPackage("G91\n");
-      delay(100);
-      sendCmdByPackage(op); 
-      delay(100);
-      sendCmdByPackage("G90\n");
+        request->send(500, "text/plain", "BAD ARGS");
     }
     else
     {
-      sendCmdByPackage(op);  
+     AsyncWebParameter* p = request->getParam(0);
+    pc_ipaddress = p->value();
+    if (!socket_client.connect(pc_ipaddress.c_str(), 1688)) 
+    {
+        request->send(500, "text/plain", "Connect PC failed!");
     }
-    
-    returnOK();
+    else
+    { 
+      request->send(200, "text/plain", "ok");
+    } 
+    }
+}
+
+
+void sendGcode(AsyncWebServerRequest *request)
+{
+  if(current_usb_status)
+  {
+    if (!request->hasArg("gc")) 
+    {
+        request->send(500, "text/plain", "No ARGS");
+    }
+    else
+    {
+        AsyncWebParameter* p = request->getParam(0);
+        String op = p->value()+"\n";
+        if(op.startsWith("G0"))
+        {
+          sendCmdByPackage("G91\n");
+          delay(100);
+          sendCmdByPackage(op); 
+          delay(100);
+          sendCmdByPackage("G90\n");
+        }
+        else
+        {
+          sendCmdByPackage(op);  
+        }
+        request->send(200, "text/plain", "ok");
+    }
   }
   else
   {
-    returnFail("NO PRINTER");
+    request->send(500, "text/plain", "NO PRINTER");
+  }
+   
+}
+
+void printStart(AsyncWebServerRequest * request)
+{
+  if(current_usb_status){
+    if (!request->hasArg("filename")) {
+      request->send(500, "text/plain", "No file");
+    }
+    else{
+        reset559();
+        delay(50);
+        espReleaseSD();
+        delay(50);
+        AsyncWebParameter* p = request->getParam(0);
+        String path = p->value();
+        if(g_status==P_IDEL){
+          String print_cmd = "M23 "+path+"\n";
+          sendCmdByPackage(print_cmd);
+          delay(50);
+          sendCmdByPackage("M24\n");
+          g_status = PRINTING;
+          request->send(200, "text/plain", "ok"); 
+
+        }
+        else{
+          request->send(500, "text/plain", "PRINTER BUSY"); 
+        }
+         
+    }
+    
+  }
+  else{
+    request->send(500, "text/plain", "NO PRINTER");
   }
   
 }
 
-void printStart()
+void espRestart(AsyncWebServerRequest *request)
 {
-  if(current_usb_status)
-  {
-    if (!server.hasArg("filename")) 
-    {
-      return returnFail("No file");
-    }
-    reset559();
-    delay(500);
-    espReleaseSD();
-    delay(500);
-    String path = server.arg("filename");
-    if(g_status==P_IDEL)
-    {
-      if (!socket_client.connect(pc_ipaddress.c_str(), 1688)) 
-      {
-          return returnFail("Connect PC failed!");
-      }
-      String print_cmd = "M23 "+path+"\n";
-      sendCmdByPackage(print_cmd);
-      delay(200);
-      sendCmdByPackage("M24\n");
-      g_status = PRINTING;
-
-    }
-    returnOK();
-  }
-  else
-  {
-    returnFail("NO PRINTER");
-  }
-  
+   ESP.restart(); 
+   request->send(200, "text/plain", "ok");
 }
 
 ServerProcess::ServerProcess()
@@ -506,15 +501,13 @@ void ServerProcess::serverInit()
 
     server.on("/print", HTTP_GET, printStart);
     server.on("/list", HTTP_GET, printDirectory);
-    server.on("/remove", HTTP_DELETE, handleDelete);
-    server.on("/edit", HTTP_PUT, handleCreate);
-    server.on("/edit", HTTP_POST, []() {
-        returnOK();
+    server.on("/remove", HTTP_GET, handlerRemove);
+    server.on("/edit", HTTP_POST, [](AsyncWebServerRequest *request) {
+        request->send(200);
     }, handleFileUpload);
     server.onNotFound(handleNotFound);
-
+  server.addHandler(&events);
   
-
   server.begin();
 
   // DBG_OUTPUT_PORT.println("HTTP server started");
@@ -548,11 +541,11 @@ void espReleaseSD()
 
     SD_MMC.end();  
     digitalWrite(18, HIGH);  
-    delay(500);
+    delay(50);
     
     //2.send gcode to marlin, init and reload the sd card
     sendCmdByPackage("M21\n");
-    delay(500);  
+    delay(50);  
     
 }
 
@@ -560,9 +553,9 @@ void espGetSDCard()
 {
     //0. release sd from marlin
     sendCmdByPackage("M22\n");
-    delay(500);
+    delay(50);
     digitalWrite(18, LOW); 
-    delay(500);
+    delay(50);
     //1.初始化SD
     int sd_get_count = 0;
     while((!SD_MMC.begin())&&(sd_get_count<5))
@@ -571,11 +564,11 @@ void espGetSDCard()
         digitalWrite(GREEN_LED, HIGH);
         digitalWrite(BLUE_LED, HIGH);
       
-        delay(500);
+        delay(100);
         digitalWrite(RED_LED, HIGH);
         digitalWrite(GREEN_LED, HIGH);
         digitalWrite(BLUE_LED, HIGH);  
-        delay(500);
+        delay(100);
         sd_get_count++;
         //break;      
     } 
@@ -591,32 +584,28 @@ void espGetSDCard()
     }  
 }
 
-void filament_detect()
+void filamentDetect()
 {
   if((cf_filament==1)&&((!paused_for_filament)))
   {
     if(digitalRead(19)==HIGH)
     {
-      delay(300);
+      delay(100);
       if(digitalRead(19)==HIGH)  
       {
         sendCmdByPackage("M600 X0 Y0\n");
-        String filament_cmd = "Beam-"+cf_node_name+"-FilamentOut";
+        String filament_cmd = cf_node_name+"-FilamentOut";
         sendHttpMsg(filament_cmd);
         paused_for_filament = true;
       }
     }  
   }  
 }
-void espRestart()
-{
-   ESP.restart(); 
-   returnOK();
-}
+
 
 void ServerProcess::serverLoop()
 {
-    server.handleClient();
+//    server.handleClient();
     if (rst_usb == true)
     {
         reset559();
@@ -627,7 +616,7 @@ void ServerProcess::serverLoop()
       digitalWrite(RED_LED, HIGH);
       digitalWrite(GREEN_LED, HIGH);
       digitalWrite(BLUE_LED, LOW);
-      filament_detect();
+      filamentDetect();
     }
     else
     {

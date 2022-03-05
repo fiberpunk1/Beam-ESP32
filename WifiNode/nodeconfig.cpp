@@ -1,6 +1,8 @@
 #include "nodeconfig.h"
 
-WebServer server(88);
+AsyncWebServer server(88);
+AsyncEventSource events("/events");
+
 HTTPClient http_client;
 WiFiClient socket_client;
 CRC8 gcrc;
