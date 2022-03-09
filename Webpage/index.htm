@@ -1,0 +1,222 @@
+<!doctype html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" type="text/css" href="bootstrap.css">
+</head>
+<html lang="en">
+<body>
+<div class="container">
+
+   <div class="row">
+      <div class="col-xs-6">
+	   <div class = row>
+			 <br>
+				<img src="logo.png">
+		 </div>
+		<div class="row">
+				 <br>
+				<div class="table-responsive">
+					<table class="table">
+					
+					<tr>
+						<td class="active">
+							<label class="radio-inline">
+								<input type="radio" name="stepRadio" id="inlineRadio1" value="0.1"> 0.10
+							</label>
+						</td>
+						
+						<td class="active">
+								<label class="radio-inline">
+								<input type="radio" name="stepRadio" id="inlineRadio2" value="1.0" checked> 1.00
+							</label>
+						</td>
+						
+						<td class="active">
+							<label class="radio-inline">
+								<input type="radio" name="stepRadio" id="inlineRadio3" value="5.0"> 5.00
+							</label>
+						</td>
+						
+						<td class="active">
+							<label class="radio-inline">
+								<input type="radio" name="stepRadio" id="inlineRadio4" value="10.0"> 10.0
+							</label>
+						</td>
+						
+					</tr>
+					
+					
+					<tr>
+						<td class="active">
+							<button class="btn btn-default btn-block" type="button" id="x-p">X+</button>
+						</td>
+						
+						<td class="active">
+							<button class="btn btn-default btn-block" type="button" id="x-d">X-</button>
+						</td>
+						
+						<td class="active">
+							<button class="btn btn-default btn-block" type="button" id="y-p">Y+</button>
+						</td>
+						
+						<td class="active">
+							<button class="btn btn-default btn-block" type="button" id="y-d">Y-</button>
+						</td>
+					</tr>
+					
+					<tr>
+						<td class="active">
+							<button class="btn btn-default btn-block" type="button" id="z-p">Z+</button>
+						</td>
+						
+						<td class="active">
+							<button class="btn btn-default btn-block" type="button" id="z-d">Z-</button>
+						</td>
+						
+						<td class="active">
+							<button class="btn btn-default btn-block" type="button" id="e-p">E+</button>
+						</td>
+						
+						<td class="active">
+							<button class="btn btn-default btn-block" type="button" id="e-d">E-</button>
+						</td>
+					</tr>
+					
+					<tr>
+						<td class="active">
+							<button class="btn btn-default btn-block" type="button" id="home">Home All</button>
+						</td>
+						
+						<td class="active">
+							<button class="btn btn-default btn-block" type="button" id="home-x">Home X</button>
+						</td>
+						
+						<td class="active">
+							<button class="btn btn-default btn-block" type="button" id="home-y">Home Y</button>
+						</td>
+						
+						<td class="active">
+							<button class="btn btn-default btn-block" type="button" id="home-z">Home Z</button>
+						</td>
+					</tr>
+					</table>
+				</div>
+		</div>
+		
+		<div class="row">
+			<form class="form-inline">
+			  <div class="form-group">
+				<label for="exampleInputName2">Hotend</label>
+				<input type="text" class="form-control" id="temp-head" placeholder="195">
+			  </div>
+				<button type="button" class="btn btn-default" id="set-head">Set</button>
+				<br/>
+				<br/>
+			  <div class="form-group">
+				<label for="exampleInputEmail2">Hotbed</label>
+				<input type="text" class="form-control" id="temp-bed" placeholder="50">
+			  </div>
+			  <button type="button" class="btn btn-default" id="set-bed">Set</button>
+			</form>
+		</div>
+		
+		<hr/>
+		<div class="row">
+			<div class="form-group">
+				<form method="POST" action="/edit" enctype="multipart/form-data">
+					<input type="file" name="data" id="choose-file"/>
+					<button type="button" class="btn btn-default" id="upload-file">Upload</button>
+				</form>
+			</div>
+			
+		</div>
+		<hr/>
+		<div class="row">
+				<div class="col-xs-3">
+					<button class="btn btn-default" type="button" id="update-list">Update Filelist</button>
+				</div>
+
+				<div class="col-xs-3">
+					<button class="btn btn-default" type="button" id="release-sd">Unmount SD</button>
+				</div>
+
+				<div class="col-xs-3">
+					<button class="btn btn-default" type="button" id="get-sd">Mount SD</button>
+				</div>
+			
+		</div>
+		
+		<hr/>
+		<div class="row">
+				<div class="table-responsive">
+					<table class="table" id="file-list-frame">
+					</table>
+				</div>
+		</div>
+
+		<div>
+			<progress id="progressbar" value="0" max="100"></progress>
+		</div>
+		
+	  </div>
+	  
+      <div class="col-xs-6">
+		<br>
+		<br>
+		<br>
+		<br>
+		<div>
+			<label for="hotbed-display">Hotbed: </label>
+			<p style="color:rgb(218, 19, 19); font-size:18px; font-weight:bold;"><span id="hotbed-display">0</span><span>&deg;C</span></p>
+		</div>
+
+		<div>
+			<label for="hothead-display">Hothead: </label>
+			<p style="color:rgb(218, 19, 19); font-size:18px; font-weight:bold;"><span id="hothead-display">0</span><span>&deg;C</span></p>
+		</div>
+		
+		<div>
+			<label for="print-progess">Progress: </label>
+			<p style="color:rgb(23, 89, 212); font-size:18px; font-weight:bold;"><span id="print-progess">0</span><span>%</span></p>
+		</div>
+		
+		<div>
+			<label for="print-file">Print file: </label>
+			<p  style="color:rgb(23, 89, 212); font-size:18px; font-weight:bold;"><span id="print-file">no file</span></p>
+		</div>	
+
+		<br/>
+		<br/>
+			<button class="btn btn-default" type="button" id="btn-pause">Pause</button>
+			<button class="btn btn-default" type="button" id="btn-cancle">Cancle</button>
+			<button class="btn btn-default" type="button" id="btn-restart">ResetESP</button>
+			<button class="btn btn-default" type="button" id="btn-resethost">GetPrinter</button>
+		<br/>
+		<br/>
+		<div>
+			
+					<label for="gcode-lineedit">Gcode</label>
+					<input type="text"  id="gcode-lineedit" placeholder="G28">
+
+			  <button type="button" class="btn btn-default" id="btn-send-gcode">Send</button>
+			  <button type="button" class="btn btn-default" id="btn-send-clear">Clear</button>
+		
+		</div>	
+		<br/>
+		<br/>
+		<div>
+				<textarea class="form-control" rows="12" id="serial-console"></textarea>
+		</div>
+		
+	  </div>
+	     
+   </div>
+
+</div>
+
+<br /><br />
+</body>
+<script src="script.js"></script>
+
+</html>
+
