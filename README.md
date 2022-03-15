@@ -17,7 +17,7 @@
 
 **PC Client:**
 <div align=center>
-<img src="./Images/BeamNexus.png" width=800 />
+<img src="./Images/BeamNexus.jpg" width=800 />
 </div>
 
 ### 2.1 What is Beam?
