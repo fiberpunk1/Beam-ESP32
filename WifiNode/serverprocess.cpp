@@ -295,7 +295,7 @@ void resetUSBHost(AsyncWebServerRequest *request)
 
 void cancleOrFinishPrint()
 {
-    String finish_cmd = "Beam:"+cf_node_name+":Finish";
+    String finish_cmd = cf_node_name+":Finish";
     g_status = CANCLE;
     g_status = P_IDEL;
     recv_ok = false;
@@ -314,7 +314,7 @@ void printerControl(AsyncWebServerRequest *request)
 {
   if (!request->hasArg("op")) 
   {
-    request->send(500, "text/plain", "No Command");
+    request->send(500, "text/plain", "NO Command");
   }
   else
   {
@@ -394,7 +394,7 @@ void sendGcode(AsyncWebServerRequest *request)
   {
     if (!request->hasArg("gc")) 
     {
-        request->send(500, "text/plain", "No ARGS");
+        request->send(500, "text/plain", "NO ARGS");
     }
     else
     {
@@ -407,6 +407,12 @@ void sendGcode(AsyncWebServerRequest *request)
           sendCmdByPackage(op); 
           delay(100);
           sendCmdByPackage("G90\n");
+        }
+        else if(op.startsWith("M115"))
+        {
+          String node_version = "Node version:"+String(VERSION);
+          events.send(node_version.c_str(), "gcode_cli");
+          sendCmdByPackage(op);
         }
         else
         {
@@ -426,7 +432,7 @@ void printStart(AsyncWebServerRequest * request)
 {
   if(current_usb_status){
     if (!request->hasArg("filename")) {
-      request->send(500, "text/plain", "No file");
+      request->send(500, "text/plain", "NO FILE");
     }
     else{
         reset559();

@@ -25,8 +25,8 @@ void readPrinterBack()
   {
     if(inData.length()>=2)
     {
-      writeLog(cf_node_name+":");
-      writeLog(inData); 
+      writeLog(cf_node_name+":"+inData);
+      // writeLog(inData); 
       events.send(inData.c_str(), "gcode_cli");
       if(inData.indexOf("setusb")!=-1)
       {

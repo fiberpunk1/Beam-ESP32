@@ -58,33 +58,12 @@ function addList(parent, path, items){
         var item = items[i];
         var itemEl;
         if(item.type === "file"){
-            itemEl = createTreeLeaf(path, item.name, item.size);
-            console.log(item.name);
-            list.appendChild(itemEl);
-
-            var td = document.createElement("td");
-            td.innerHTML = "<button class='btn btn-default btn-xs' type='button'>delete</button>";
-            td.className = item.name;
-            td.onclick = function(){
-                console.log("delete: %s", this.className);
-                xmlHttp = new XMLHttpRequest();
-                xmlHttp.onload = function(){
-                   creatTree();     
-                }
-                xmlHttp.onreadystatechange = function(){
-                    var resp = xmlHttp.responseText;
-                    if(resp.startsWith("NO")||resp.startsWith("SD")||resp.startsWith("PRINTER")){
-                        alert(resp);
-                    }
-                }
-                xmlHttp.open("GET", "/remove?path="+this.className, true);
-                xmlHttp.send();
-            };
-            list.appendChild(td);
-
             if(item.name.endsWith(".gcode")){
+                itemEl = createTreeLeaf(path, item.name, item.size);
+                console.log(item.name);
+                list.appendChild(itemEl);
                 var td_print = document.createElement("td");
-                td_print.innerHTML = "<button class='btn btn-default btn-xs' type='button'>print</button>";
+                td_print.innerHTML = "<button class='btn btn-default btn-xs' type='button'><span class='glyphicon glyphicon-print' aria-hidden='true'></span>print</button>";
                 td_print.className = item.name;
                 td_print.onclick = function(){
                     xmlHttp = new XMLHttpRequest();
@@ -99,8 +78,33 @@ function addList(parent, path, items){
                     xmlHttp.send();
                 };
                 list.appendChild(td_print);
+
+
+                var td = document.createElement("td");
+                td.innerHTML = "<button class='btn btn-default btn-xs' type='button'><span class='glyphicon glyphicon-trash' aria-hidden='true'></span>delete</button>";
+                td.className = item.name;
+                td.onclick = function(){
+                    console.log("delete: %s", this.className);
+                    xmlHttp = new XMLHttpRequest();
+                    xmlHttp.onload = function(){
+                       creatTree();     
+                    }
+                    xmlHttp.onreadystatechange = function(){
+                        var resp = xmlHttp.responseText;
+                        if(resp.startsWith("NO")||resp.startsWith("SD")||resp.startsWith("PRINTER")){
+                            alert(resp);
+                        }
+                    }
+                    xmlHttp.open("GET", "/remove?path="+this.className, true);
+                    xmlHttp.send();
+                };
+                list.appendChild(td);
             }
 
+
+         
+
+           
         } 
         
     }
@@ -238,7 +242,8 @@ sendGcodedButton.onclick = () => {
 
 }
 sendCleardButton.onclick = () => {
-    document.getElementById("serial-console").value = "";
+    document.getElementById("serial-console").value = "clean\r\n";
+
 }
 //enter button
 sendGcdoeInput.onkeydown = function(e){
@@ -264,7 +269,8 @@ source.addEventListener('gcode_cli', function(e) {
    var reg_t = /T:([0-9]*\.[0-9]*) *\/([0-9]*\.[0-9]*)/g;
    var reg_b = /B:([0-9]*\.[0-9]*) *\/([0-9]*\.[0-9]*)/g;
    var reg_p = /SD printing byte ([0-9]*)\/([0-9]*)/g;
-   var reg_f = /Current file:([\S\s]*).GCO/g;
+   var reg_af = /Current file:([\S\s]*).GCO/g;
+   var reg_f = /Current file:([\S\s]*).GCO ([\S\s]*).gcode/g;
    var reg_end = /Finish/g;
 
    var heater = obj.match(reg_t);
@@ -299,6 +305,12 @@ source.addEventListener('gcode_cli', function(e) {
     if(print_file){
         var printFileElement = document.getElementById("print-file");
         printFileElement.innerHTML = RegExp.$1 + ".GCO";
+    }
+
+    var print_ful_name = obj.match(reg_af);
+    if(print_ful_name){
+        var printFileElement = document.getElementById("print-file");
+        printFileElement.innerHTML = RegExp.$2 + ".gcode";
     }
 
     var b_finish = obj.match(reg_end);

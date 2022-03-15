@@ -1,17 +1,19 @@
 <!doctype html>
 <head>
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport"
+			content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <link rel="stylesheet" type="text/css" href="bootstrap.css">
+<link rel="stylesheet" type="text/css" href="index.css">
 </head>
 <html lang="en">
 <body>
 <div class="container">
 
    <div class="row">
-      <div class="col-xs-6">
+      <div class="col-xs-12 col-md-6">
 	   <div class = row>
 			 <br>
-				<img src="logo.png">
+				<img class="logo" src="logo.png">
 		 </div>
 		<div class="row">
 				 <br>
@@ -96,34 +98,36 @@
 						</td>
 						
 						<td class="active">
-							<button class="btn btn-default btn-block" type="button" id="home-z">Home Z</button>
+							<button class="btn btn-default btn-block" type="button" id="home-z"><span class='glyphicon glyphicon-print' aria-hidden='true'></span>Home Z</button>
 						</td>
 					</tr>
 					</table>
 				</div>
 		</div>
-		
+		<br>
 		<div class="row">
 			<form class="form-inline">
 			  <div class="form-group">
 				<label for="exampleInputName2">Hotend</label>
-				<input type="text" class="form-control" id="temp-head" placeholder="195">
-			  </div>
+				<input type="text" class="form-control form-control1" id="temp-head" placeholder="195">
 				<button type="button" class="btn btn-default" id="set-head">Set</button>
+			  </div>
+				
 				<br/>
 				<br/>
 			  <div class="form-group">
 				<label for="exampleInputEmail2">Hotbed</label>
-				<input type="text" class="form-control" id="temp-bed" placeholder="50">
+				<input type="text" class="form-control form-control1" id="temp-bed" placeholder="50">
+				  <button type="button" class="btn btn-default" id="set-bed">Set</button>
 			  </div>
-			  <button type="button" class="btn btn-default" id="set-bed">Set</button>
+			
 			</form>
 		</div>
 		
 		<hr/>
 		<div class="row">
 			<div class="form-group">
-				<form method="POST" action="/edit" enctype="multipart/form-data">
+				<form method="POST" class="form" action="/edit" enctype="multipart/form-data">
 					<input type="file" name="data" id="choose-file"/>
 					<button type="button" class="btn btn-default" id="upload-file">Upload</button>
 				</form>
@@ -132,15 +136,15 @@
 		</div>
 		<hr/>
 		<div class="row">
-				<div class="col-xs-3">
+				<div class="col-xs-4">
 					<button class="btn btn-default" type="button" id="update-list">Update Filelist</button>
 				</div>
 
-				<div class="col-xs-3">
+				<div class="col-xs-4">
 					<button class="btn btn-default" type="button" id="release-sd">Unmount SD</button>
 				</div>
 
-				<div class="col-xs-3">
+				<div class="col-xs-4">
 					<button class="btn btn-default" type="button" id="get-sd">Mount SD</button>
 				</div>
 			
@@ -153,18 +157,21 @@
 					</table>
 				</div>
 		</div>
-
-		<div>
-			<progress id="progressbar" value="0" max="100"></progress>
+		<br>
+		<div class="jd">
+			<progress class="jd1" id="progressbar" value="0" max="100"></progress>
 		</div>
 		
 	  </div>
 	  
-      <div class="col-xs-6">
+      <div class="col-xs-12 col-md-6">
 		<br>
 		<br>
 		<br>
 		<br>
+		<br>
+		<br>
+		<div class="c-flex">
 		<div>
 			<label for="hotbed-display">Hotbed: </label>
 			<p style="color:rgb(218, 19, 19); font-size:18px; font-weight:bold;"><span id="hotbed-display">0</span><span>&deg;C</span></p>
@@ -177,26 +184,28 @@
 		
 		<div>
 			<label for="print-progess">Progress: </label>
-			<p style="color:rgb(23, 89, 212); font-size:18px; font-weight:bold;"><span id="print-progess">0</span><span>%</span></p>
+			<p style="color:rgb(255, 179, 0); font-size:18px; font-weight:bold;"><span id="print-progess">0</span><span>%</span></p>
 		</div>
 		
 		<div>
 			<label for="print-file">Print file: </label>
-			<p  style="color:rgb(23, 89, 212); font-size:18px; font-weight:bold;"><span id="print-file">no file</span></p>
+			<p  style="color:rgb(255, 179, 0); font-size:18px; font-weight:bold;"><span id="print-file">no file</span></p>
 		</div>	
-
+</div>
 		<br/>
-		<br/>
+		
+		
+		<hr>
 			<button class="btn btn-default" type="button" id="btn-pause">Pause</button>
 			<button class="btn btn-default" type="button" id="btn-cancle">Cancle</button>
 			<button class="btn btn-default" type="button" id="btn-restart">ResetESP</button>
 			<button class="btn btn-default" type="button" id="btn-resethost">GetPrinter</button>
-		<br/>
+			<hr>
+	
 		<br/>
 		<div>
-			
 					<label for="gcode-lineedit">Gcode</label>
-					<input type="text"  id="gcode-lineedit" placeholder="G28">
+					<input type="text" class="btn btn-default"  id="gcode-lineedit" placeholder="G28">
 
 			  <button type="button" class="btn btn-default" id="btn-send-gcode">Send</button>
 			  <button type="button" class="btn btn-default" id="btn-send-clear">Clear</button>
@@ -215,6 +224,150 @@
 </div>
 
 <br /><br />
+<br /><br /><br /><br />
+<!-- <canvas id="space"></canvas> -->
+
+		<a href="#" id="warp">WARP SPEED</a>
+		<script>
+			//based on an Example by @curran
+			window.requestAnimFrame = (function() {
+				return window.requestAnimationFrame
+			})();
+			var canvas = document.getElementById("space");
+			var c = canvas.getContext("2d");
+
+			var numStars = 1900;
+			var radius = '0.' + Math.floor(Math.random() * 9) + 1;
+			var focalLength = canvas.width * 2;
+			var warp = 0;
+			var centerX, centerY;
+
+			var stars = [],
+				star;
+			var i;
+
+			var animate = true;
+
+			initializeStars();
+
+			function executeFrame() {
+
+				if (animate)
+					requestAnimFrame(executeFrame);
+				moveStars();
+				drawStars();
+			}
+
+			function initializeStars() {
+				centerX = canvas.width / 2;
+				centerY = canvas.height / 2;
+
+				stars = [];
+				for (i = 0; i < numStars; i++) {
+					star = {
+						x: Math.random() * canvas.width,
+						y: Math.random() * canvas.height,
+						z: Math.random() * canvas.width,
+						o: '0.' + Math.floor(Math.random() * 99) + 1
+					};
+					stars.push(star);
+				}
+			}
+
+			function moveStars() {
+				for (i = 0; i < numStars; i++) {
+					star = stars[i];
+					star.z--;
+
+					if (star.z <= 0) {
+						star.z = canvas.width;
+					}
+				}
+			}
+
+			function drawStars() {
+				var pixelX, pixelY, pixelRadius;
+
+				// Resize to the screen
+				if (canvas.width != window.innerWidth || canvas.width != window.innerWidth) {
+					canvas.width = window.innerWidth;
+					canvas.height = window.innerHeight;
+					initializeStars();
+				}
+				if (warp == 0) {
+					c.fillStyle = "rgba(0,10,20,1)";
+					c.fillRect(0, 0, canvas.width, canvas.height);
+				}
+				c.fillStyle = "rgba(209, 255, 255, " + radius + ")";
+				for (i = 0; i < numStars; i++) {
+					star = stars[i];
+
+					pixelX = (star.x - centerX) * (focalLength / star.z);
+					pixelX += centerX;
+					pixelY = (star.y - centerY) * (focalLength / star.z);
+					pixelY += centerY;
+					pixelRadius = 1 * (focalLength / star.z);
+
+					c.fillRect(pixelX, pixelY, pixelRadius, pixelRadius);
+					c.fillStyle = "rgba(209, 255, 255, " + star.o + ")";
+					//c.fill();
+				}
+			}
+
+			document.getElementById('warp').addEventListener("click", function(e) {
+				window.c.beginPath();
+				window.c.clearRect(0, 0, window.canvas.width, window.canvas.height);
+				window.warp = warp ? 0 : 1;
+				executeFrame();
+			});
+
+			executeFrame();
+
+
+$(function(){
+		
+		var mobile_flag = isMobile();
+		if(mobile_flag){
+				$("#cssmenu > ul > li > a").click(function() {
+					$("#cssmenu ul").hide()
+				})
+		}else{
+				$("#cssmenu > ul > li > a").click(function() {
+					$("#cssmenu ul").show()
+				})
+		}
+	})
+ 
+ 
+ 
+ 
+function isMobile() {
+		    var userAgentInfo = navigator.userAgent;
+ 
+		    var mobileAgents = [ "Android", "iPhone", "SymbianOS", "Windows Phone", "iPad","iPod"];
+ 
+		    var mobile_flag = false;
+ 
+		   
+		    for (var v = 0; v < mobileAgents.length; v++) {
+		        if (userAgentInfo.indexOf(mobileAgents[v]) > 0) {
+		            mobile_flag = true;
+		            break;
+		        }
+		    }
+		     var screen_width = window.screen.width;
+		     var screen_height = window.screen.height;    
+ 
+		  
+		     if(screen_width < 500 && screen_height < 800){
+		         mobile_flag = true;
+		     }
+ 
+		     return mobile_flag;
+		}
+			
+		</script>
+
 </body>
 <script src="script.js"></script>
 

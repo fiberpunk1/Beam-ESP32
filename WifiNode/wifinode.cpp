@@ -291,6 +291,11 @@ void WifiNode::init()
 
     WiFi.begin((const char*)cf_ssid.c_str(), (const char*)cf_password.c_str());
 
+    // if(MDNS.begin(cf_node_name.c_str()))
+    // {
+    //     MDNS.addService("http", "tcp", 88);
+    // }
+
     uint8_t i = 0;
     while (WiFi.status() != WL_CONNECTED && i++ < 20) 
     {
@@ -323,13 +328,13 @@ void WifiNode::init()
 
     //4. crc init
     gcrc.begin();
-    
+    delay(500);
     reset559();
     // camera_trigger();
-    delay(500);
-    hardwareReleaseSD();
-    delay(2000);
-    espGetSDCard();
+    
+   // hardwareReleaseSD();
+   // delay(2000);
+   // espGetSDCard();
 }
 
 void WifiNode::process()
