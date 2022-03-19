@@ -85,7 +85,7 @@ Please refer to this [guide](https://docs.google.com/presentation/d/1EhdrxVowPHj
 ## 5. Community support
 
 - [Facebook](https://www.facebook.com/Fiberpunk)
-
+- [Discord](https://discord.gg/VNNFrfhsbN)
 
 
 
