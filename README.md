@@ -82,6 +82,11 @@ BeamNode provides core APIs to enable more platforms(Such as [Octoprint](https:/
 
 Please refer to this [guide](https://docs.google.com/presentation/d/1EhdrxVowPHj--iUrkvdkC4d59uzsc6_Up4gLxd3CpAw/edit?usp=sharing) to complete the firmware burning and updating. 
 
+## 5. Community support
+
+- [Facebook](https://www.facebook.com/Fiberpunk)
+
+
 
 
 
