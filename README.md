@@ -84,6 +84,8 @@ Please refer to this [guide](https://docs.google.com/presentation/d/1EhdrxVowPHj
 
 ## 5. Community support
 
+- Email: contact@fiber-punk.com
+- [Website](https://fiber-punk.com/)
 - [Facebook](https://www.facebook.com/Fiberpunk)
 - [Discord](https://discord.gg/VNNFrfhsbN)
 
