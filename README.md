@@ -86,7 +86,7 @@ Please refer to this [guide](https://docs.google.com/presentation/d/1EhdrxVowPHj
 
 - Email: contact@fiber-punk.com
 - [Website](https://fiber-punk.com/)
-- [Facebook](https://www.facebook.com/Fiberpunk)
+- [Facebook](https://www.facebook.com/Fiberpunk-103588222263591)
 - [Discord](https://discord.gg/VNNFrfhsbN)
 
 
