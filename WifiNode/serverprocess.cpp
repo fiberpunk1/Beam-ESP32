@@ -370,6 +370,8 @@ void printerStatus(AsyncWebServerRequest *request)
     sendCmdByPackage("M27\n");
     delay(200);
     sendCmdByPackage("M27 C\n");
+    if(current_file.length()>0)
+      writeLog("Current file:"+current_file);
   }
   String result = current_temp+","+current_bed_temp+","+current_layers; 
   request->send(200, "text/plain",result);
@@ -398,7 +400,7 @@ void cancleOrFinishPrint()
     g_status = P_IDEL;
     recv_ok = false;
     recvl_ok = false;
-    sendCmdByPackage("M524\n");
+    sendCmdByPackage("M603\n");
     current_bed_temp = "";
     current_layers = "";
     current_temp = "";
@@ -441,7 +443,7 @@ void printerControl(AsyncWebServerRequest *request)
           if(op=="PAUSE")
           {
             g_status = PAUSE;
-            sendCmdByPackage("M0\n");
+            sendCmdByPackage("M601\n");
 
           }
           else if(op=="CANCLE")
@@ -454,7 +456,7 @@ void printerControl(AsyncWebServerRequest *request)
             {
               g_status = PRINTING;
               // PRINTER_PORT.print("G4 S1.0\n");
-              sendCmdByPackage("M108\n");
+              sendCmdByPackage("M602\n");
             }
 
           }
@@ -550,12 +552,14 @@ void printStart(AsyncWebServerRequest * request)
       request->send(500, "text/plain", "NO FILE");
     }
     else{
-        reset559();
-        delay(50);
+//        reset559();
+//        delay(50);
         espReleaseSD();
         delay(50);
         AsyncWebParameter* p = request->getParam(0);
         String path = p->value();
+        path.toLowerCase();
+        current_file = path;
         if(g_status==P_IDEL){
           String print_cmd = "M23 "+path+"\n";
           sendCmdByPackage(print_cmd);
@@ -700,7 +704,7 @@ void espGetSDCard()
         
         SPI.begin(14,2,15,13);
         int sd_get_count = 0;
-        while((!SD.begin(13,SPI,4000000,"/sd",5,false))&&(sd_get_count<5))
+        while((!SD.begin(13,SPI,4000000,"/sd",5,false))&&(sd_get_count<3))
         {
             digitalWrite(RED_LED, LOW);
             digitalWrite(GREEN_LED, HIGH);
@@ -708,11 +712,11 @@ void espGetSDCard()
 
             // DBG_OUTPUT_PORT.println("Not Found SD Card.");
             // message_display("Not Found SD Card.");        
-            delay(500);
+            delay(200);
             digitalWrite(RED_LED, HIGH);
             digitalWrite(GREEN_LED, HIGH);
             digitalWrite(BLUE_LED, HIGH);  
-            delay(500);
+            delay(200);
             sd_get_count++;
     //        break;      
         } 
@@ -720,18 +724,18 @@ void espGetSDCard()
     else if(printer_sd_type==1)
     {
         int sd_get_count = 0;
-        while((!SD_MMC.begin())&&(sd_get_count<5))
+        while((!SD_MMC.begin())&&(sd_get_count<3))
         {
             digitalWrite(RED_LED, LOW);
             digitalWrite(GREEN_LED, HIGH);
             digitalWrite(BLUE_LED, HIGH);
 
             // message_display("Not Found SD Card.");        
-            delay(500);
+            delay(200);
             digitalWrite(RED_LED, HIGH);
             digitalWrite(GREEN_LED, HIGH);
             digitalWrite(BLUE_LED, HIGH);  
-            delay(500);
+            delay(200);
             sd_get_count++;
         }     
     }
@@ -763,7 +767,11 @@ void filamentDetect()
 void ServerProcess::serverLoop()
 {
 //    server.handleClient();
-
+    if (rst_usb == true)
+    {
+        reset559();
+        rst_usb = false;
+    }
     if (g_status==PRINTING)
     {
       digitalWrite(RED_LED, HIGH);
@@ -776,11 +784,6 @@ void ServerProcess::serverLoop()
       digitalWrite(RED_LED, HIGH);
       digitalWrite(GREEN_LED, LOW);
       digitalWrite(BLUE_LED, HIGH);
-      if (rst_usb == true)
-      {
-          reset559();
-          rst_usb = false;
-      }
     }
     if(paused_for_user&&(!paused_for_filament))
     {

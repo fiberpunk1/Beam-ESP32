@@ -19,6 +19,7 @@ String current_layers = "";
 String current_temp = "";
 String current_bed_temp = "";
 String pc_ipaddress = "";
+String current_file="";
 
 OP_STATUS g_status=P_IDEL;
 ERROR_CODE g_error=NORMAL;
@@ -32,7 +33,7 @@ bool paused_for_user = false;
 bool paused_for_filament = false;
 
 //printer sd type: 0==spi  1==sdio
-uint8_t printer_sd_type = 1;
+uint8_t printer_sd_type = 0;
 unsigned char current_usb_status = 0;
 unsigned char pre_usb_status = 0;
 

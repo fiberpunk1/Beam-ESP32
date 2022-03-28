@@ -7,6 +7,7 @@
 #include "rBase64.h"
 
 void Write_String(int a,int b,String str);
+void clearSD();
 
 extern void hardwareReleaseSD();
 extern void espGetSDCard();
@@ -139,8 +140,6 @@ void WifiNode::init()
         return;
     }
 
-
-    //default to SDIO method
     String instore_sd_type = Read_String(EEPROM.read(17),150);
     if(instore_sd_type.length()>0)
     {
@@ -149,19 +148,19 @@ void WifiNode::init()
         {
             printer_sd_type = 0;
         }
-        else if(instore_sd_type.indexOf("SDIO")!=-1)
+        if(instore_sd_type.indexOf("SDIO")!=-1)
         {
             printer_sd_type = 1;
         }
         else
         {
-            printer_sd_type = 1;
+            printer_sd_type = 0;
         }
         
     }
     else
     {
-        printer_sd_type = 1;
+        printer_sd_type = 0;
     }
     
 
@@ -203,6 +202,7 @@ void WifiNode::init()
 //    delay(1000);
     sendCmdByPackageNow("M22\n");
     delay(500);
+
     //1.初始化SD
     if(printer_sd_type==0)
     {
