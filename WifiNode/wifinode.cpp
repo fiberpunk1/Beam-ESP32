@@ -6,6 +6,8 @@
 #include "nodeconfig.h"
 #include "rBase64.h"
 
+void Write_String(int a,int b,String str);
+
 extern void hardwareReleaseSD();
 extern void espGetSDCard();
 extern void espReleaseSD();
@@ -124,7 +126,7 @@ void WifiNode::checkwifi()
 void WifiNode::init()
 {
 	uint8_t pw_exist = 0;
- String b_filament = "";
+    String b_filament = "";
 	EEPROM.begin(256);
     //0.初始化串口和OLED屏
     PRINTER_PORT.begin(115200);
@@ -132,10 +134,37 @@ void WifiNode::init()
     PRINTER_PORT.setRxBufferSize(512);
     PRINTER_PORT.setDebugOutput(true);
 
-  if(!SPIFFS.begin(true)){
-    Serial.println("SPIFFS Mount Failed");
-    return;
-   }
+    if(!SPIFFS.begin(true)){
+        Serial.println("SPIFFS Mount Failed");
+        return;
+    }
+
+
+    //default to SDIO method
+    String instore_sd_type = Read_String(EEPROM.read(17),150);
+    if(instore_sd_type.length()>0)
+    {
+      
+        if(instore_sd_type.indexOf("SPI")!=-1)
+        {
+            printer_sd_type = 0;
+        }
+        else if(instore_sd_type.indexOf("SDIO")!=-1)
+        {
+            printer_sd_type = 1;
+        }
+        else
+        {
+            printer_sd_type = 1;
+        }
+        
+    }
+    else
+    {
+        printer_sd_type = 1;
+    }
+    
+
 
     pinMode(5, OUTPUT);
     digitalWrite(5, LOW);
@@ -175,32 +204,50 @@ void WifiNode::init()
     sendCmdByPackageNow("M22\n");
     delay(500);
     //1.初始化SD
-    while(!SD_MMC.begin())
+    if(printer_sd_type==0)
     {
-        digitalWrite(RED_LED, LOW);
-        digitalWrite(GREEN_LED, HIGH);
-        digitalWrite(BLUE_LED, HIGH);
+        SPI.begin(14,2,15,13);
+        int sd_get_count = 0;
+        while((!SD.begin(13,SPI,4000000,"/sd",5,false))&&(sd_get_count<5))
+        {
+            digitalWrite(RED_LED, LOW);
+            digitalWrite(GREEN_LED, HIGH);
+            digitalWrite(BLUE_LED, HIGH);
 
-        // DBG_OUTPUT_PORT.println("Not Found SD Card.");
-        message_display("Not Found SD Card.");        
-        delay(500);
-        digitalWrite(RED_LED, HIGH);
-        digitalWrite(GREEN_LED, HIGH);
-        digitalWrite(BLUE_LED, HIGH);  
-        delay(500);
-//        break;      
-    } 
+            // DBG_OUTPUT_PORT.println("Not Found SD Card.");
+            message_display("Not Found SD Card.");        
+            delay(500);
+            digitalWrite(RED_LED, HIGH);
+            digitalWrite(GREEN_LED, HIGH);
+            digitalWrite(BLUE_LED, HIGH);  
+            delay(500);
+            sd_get_count++;
+    //        break;      
+        } 
+    }
+    else if(printer_sd_type==1)
+    {
+        int sd_get_count = 0;
+        while((!SD_MMC.begin())&&(sd_get_count<5))
+        {
+            digitalWrite(RED_LED, LOW);
+            digitalWrite(GREEN_LED, HIGH);
+            digitalWrite(BLUE_LED, HIGH);
+
+            message_display("Not Found SD Card.");        
+            delay(500);
+            digitalWrite(RED_LED, HIGH);
+            digitalWrite(GREEN_LED, HIGH);
+            digitalWrite(BLUE_LED, HIGH);  
+            delay(500);
+            sd_get_count++;
+        }     
+    }
+    
     digitalWrite(RED_LED, HIGH);
     digitalWrite(GREEN_LED, HIGH);
     digitalWrite(BLUE_LED, HIGH);
-    uint8_t cardType = SD_MMC.cardType();
-
-
-
-    if(cardType == CARD_NONE){
-        //Serial.println("No SD_MMC card attached");
-        //return;
-    }
+   
     // DBG_OUTPUT_PORT.println("SD Card initialized.");
     hasSD = true;
    
@@ -210,7 +257,12 @@ void WifiNode::init()
     delay(500);
     //读取wifi账号密码，还有打印机名字
     
-    File config_file = SD_MMC.open("/config.txt",FILE_READ);
+    File config_file;
+    if(printer_sd_type==0)
+        config_file = SD.open("/config.txt",FILE_READ);
+    else if(printer_sd_type==1)
+        config_file = SD_MMC.open("/config.txt",FILE_READ);
+    
 
     if(config_file)
     {
@@ -267,8 +319,10 @@ void WifiNode::init()
         b_filament = Read_String(EEPROM.read(13),120);
         delay(50);
         cf_filament = b_filament.toInt();
-        
-        SD_MMC.remove("/config.txt");
+        if(printer_sd_type==0)
+            SD.remove("/config.txt");
+        else if(printer_sd_type==1)
+            SD_MMC.remove("/config.txt");
     }
     else
     {

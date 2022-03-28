@@ -27,10 +27,11 @@ void readPrinterBack()
     {
       writeLog(cf_node_name+":"+inData);
       // writeLog(inData); 
-      events.send(inData.c_str(), "gcode_cli");
+      
       if(inData.indexOf("setusb")!=-1)
       {
-        rst_usb = true;
+        if (g_status!=PRINTING)
+            rst_usb = true;
       } 
       //check temp
       if (inData.indexOf("T:")!=-1)

@@ -81,9 +81,17 @@ label,input[type="file"]{
 	color: #fff;
 }
 
-label,input[type="text"]{
-	color: #fff;
+#temp-bed{
+	color: #000;
 }
+
+#temp-head{
+	color: #000;
+}
+
+/* label,input[type="text"]{
+	color: #fff;
+} */
 
 
 .form,.form-group{

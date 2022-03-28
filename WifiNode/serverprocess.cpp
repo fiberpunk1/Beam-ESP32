@@ -11,6 +11,10 @@ void sendCmdByPackage(String cmd);
 void sendCmdByPackageNow(String cmd);
 void cancleOrFinishPrint();
 
+
+extern void Write_String(int a,int b,String str);
+extern void writeLog(String);
+
 void notFound(AsyncWebServerRequest *request) {
     request->send(404, "text/plain", "Not found");
 }
@@ -81,10 +85,23 @@ void handleFileUpload(AsyncWebServerRequest *request, String filename, size_t in
   }
   //start
   if (!index) {
-    if (SD_MMC.exists((char *)filename.c_str())) {
-      SD_MMC.remove((char *)filename.c_str());
+    if(printer_sd_type==0)
+    {
+      if (SD.exists((char *)filename.c_str())) 
+      {
+        SD.remove((char *)filename.c_str());
+      }
+      uploadFile = SD.open(filename.c_str(), FILE_WRITE);
     }
-    uploadFile = SD_MMC.open(filename.c_str(), FILE_WRITE);
+    else if(printer_sd_type==1)
+    {
+      if (SD_MMC.exists((char *)filename.c_str())) 
+      {
+        SD_MMC.remove((char *)filename.c_str());
+      }
+      uploadFile = SD_MMC.open(filename.c_str(), FILE_WRITE);
+    }
+
     DBG_OUTPUT_PORT.print("Upload: START, filename: "); DBG_OUTPUT_PORT.println(filename);
   } 
 
@@ -108,12 +125,25 @@ void handleFileUpload(AsyncWebServerRequest *request, String filename, size_t in
 
 void deleteRecursive(String path) 
 {
-  File file = SD_MMC.open((char *)path.c_str());
-  if (!file.isDirectory()) 
+  if(printer_sd_type==0)
   {
-    file.close();
-    SD_MMC.remove((char *)path.c_str());
+    File file = SD.open((char *)path.c_str());
+    if (!file.isDirectory()) 
+    {
+      file.close();
+      SD.remove((char *)path.c_str());
+    }
   }
+  else if(printer_sd_type==1)
+  {
+    File file = SD_MMC.open((char *)path.c_str());
+    if (!file.isDirectory()) 
+    {
+      file.close();
+      SD_MMC.remove((char *)path.c_str());
+    }
+  }
+ 
   
 }
 
@@ -127,15 +157,34 @@ void handlerRemove(AsyncWebServerRequest *request) {
       AsyncWebParameter* p = request->getParam(0);
       String path = p->value();
       
-      if (path == "/" || !SD_MMC.exists((char *)path.c_str())) {
-        request->send(500, "text/plain", "BAD PATH");
-        Serial.println("path not exists");
-      }else{
-        deleteRecursive(path);
-        Serial.println("send ok"); 
-
-        request->send(200, "text/plain", "ok");
+      if(printer_sd_type==0)
+      {
+        if (path == "/" || !SD.exists((char *)path.c_str())) 
+        {
+          request->send(500, "text/plain", "BAD PATH");
+          Serial.println("path not exists");
+        }else
+        {
+          deleteRecursive(path);
+          Serial.println("send ok"); 
+          request->send(200, "text/plain", "ok");
+        }
       }
+      else if(printer_sd_type==1)
+      {
+        if (path == "/" || !SD_MMC.exists((char *)path.c_str())) 
+        {
+          request->send(500, "text/plain", "BAD PATH");
+          Serial.println("path not exists");
+        }else
+        {
+          deleteRecursive(path);
+          Serial.println("send ok"); 
+          request->send(200, "text/plain", "ok");
+        }
+      }
+
+
   }
 }
 
@@ -149,38 +198,87 @@ void printDirectory(AsyncWebServerRequest * request) {
   AsyncWebParameter* p = request->getParam(0);
   String path = p->value();
 
-  if (path != "/" && !SD_MMC.exists((char *)path.c_str())) {
-    request->send(500, "text/plain","BAD PATH");
-  }
-  File dir = SD_MMC.open((char *)path.c_str());
-  path = String();
-  if (!dir.isDirectory()) {
+  if(printer_sd_type==0)
+  {
+    if (path != "/" && !SD.exists((char *)path.c_str())) {
+      request->send(500, "text/plain","BAD PATH");
+    }
+
+    writeLog(cf_node_name+"SD Type: SPI");
+    File dir = SD.open((char *)path.c_str());
+    path = String();
+    if (!dir.isDirectory()) {
+      dir.close();
+      request->send(500, "text/plain", "NOT DIR");
+    }
+    dir.rewindDirectory();
+    
+
+    String output = "[";
+    for (int cnt = 0; true; ++cnt) {
+      File entry = dir.openNextFile();
+      if (!entry) {
+        break;
+      }
+      if (cnt > 0) {
+        output += ',';
+      }
+      output += "{\"type\":\"";
+      output += (entry.isDirectory()) ? "dir" : "file";
+      output += "\",\"name\":\"";
+      output += entry.name();
+      output += "\"";
+      output += "}";
+      entry.close();
+    }
+    output += "]";
+    request->send(200, "text/json", output);
     dir.close();
-    request->send(500, "text/plain", "NOT DIR");
   }
-  dir.rewindDirectory();
+  else if(printer_sd_type==1)
+  {
+    writeLog(cf_node_name+"SD Type: SDIO");
+    if (path != "/" && !SD_MMC.exists((char *)path.c_str())) {
+      request->send(500, "text/plain","BAD PATH");
+    }
+    File dir = SD_MMC.open((char *)path.c_str());
+       path = String();
+    if (!dir.isDirectory()) {
+      dir.close();
+      request->send(500, "text/plain", "NOT DIR");
+    }
+    dir.rewindDirectory();
+    
+
+    String output = "[";
+    for (int cnt = 0; true; ++cnt) {
+      File entry = dir.openNextFile();
+      if (!entry) {
+        break;
+      }
+      if (cnt > 0) {
+        output += ',';
+      }
+      output += "{\"type\":\"";
+      output += (entry.isDirectory()) ? "dir" : "file";
+      output += "\",\"name\":\"";
+      output += entry.name();
+      output += "\"";
+      output += "}";
+      entry.close();
+    }
+    output += "]";
+    request->send(200, "text/json", output);
+    dir.close();
+  }
+  else
+  {
+    writeLog(cf_node_name+"SD Type:"+String(printer_sd_type));
+    request->send(500, "text/plain", "NOT SD");
+  }
   
 
-  String output = "[";
-  for (int cnt = 0; true; ++cnt) {
-    File entry = dir.openNextFile();
-    if (!entry) {
-      break;
-    }
-    if (cnt > 0) {
-      output += ',';
-    }
-    output += "{\"type\":\"";
-    output += (entry.isDirectory()) ? "dir" : "file";
-    output += "\",\"name\":\"";
-    output += entry.name();
-    output += "\"";
-    output += "}";
-    entry.close();
-  }
-  output += "]";
-  request->send(200, "text/json", output);
-  dir.close();
+
 }
 void sendCmdByPackageNow(String cmd)
 {
@@ -308,6 +406,23 @@ void cancleOrFinishPrint()
     sendHttpMsg(finish_cmd);
     // if(socket_client.connected())
     //   socket_client.stop();
+}
+
+void setSDType(AsyncWebServerRequest *request)
+{
+  if (!request->hasArg("type")) 
+  {
+    request->send(500, "text/plain", "NO Command");
+  }
+  else
+  {
+      AsyncWebParameter* p = request->getParam(0);
+      String op = p->value();
+      Write_String(17,150,op);
+      delay(100);
+      request->send(200, "text/plain","ok");
+      ESP.restart(); 
+  }
 }
 
 void printerControl(AsyncWebServerRequest *request)
@@ -465,8 +580,8 @@ void printStart(AsyncWebServerRequest * request)
 
 void espRestart(AsyncWebServerRequest *request)
 {
-   ESP.restart(); 
    request->send(200, "text/plain", "ok");
+   ESP.restart(); 
 }
 
 ServerProcess::ServerProcess()
@@ -498,6 +613,7 @@ void ServerProcess::serverInit()
     server.on("/pcsocket", HTTP_GET, getPCAddress);
     server.on("/resetusb",HTTP_GET,resetUSBHost);
     server.on("/esprestart", HTTP_GET, espRestart);
+    server.on("/setsdtype", HTTP_GET, setSDType);
 
     // server.on("/capture", HTTP_GET, testCaptureImage);
 
@@ -532,20 +648,34 @@ void hardwareReleaseSD()
 
     digitalWrite(18, HIGH);  
     delay(500);  
-    SD_MMC.end();  
+    if(printer_sd_type==0)
+    {
+      SD.end();  
+    }
+    else if(printer_sd_type==1)
+    {
+      SD_MMC.end();
+    } 
 }
 
 void espReleaseSD()
 {
     //1.release SD card
-//    pinMode(2, INPUT_PULLUP);
-//    pinMode(4, INPUT_PULLUP);
-//    pinMode(12, INPUT_PULLUP);
-//    pinMode(13, INPUT_PULLUP);
-//    pinMode(14, INPUT_PULLUP);
-//    pinMode(15, INPUT_PULLUP);
+   pinMode(2, INPUT_PULLUP);
+   pinMode(4, INPUT_PULLUP);
+   pinMode(12, INPUT_PULLUP);
+   pinMode(13, INPUT_PULLUP);
+   pinMode(14, INPUT_PULLUP);
+   pinMode(15, INPUT_PULLUP);
 
-    SD_MMC.end();  
+  if(printer_sd_type==0)
+  {
+    SD.end();  
+  }
+  else if(printer_sd_type==1)
+  {
+    SD_MMC.end();
+  }
     digitalWrite(18, HIGH);  
     delay(50);
     
@@ -563,31 +693,52 @@ void espGetSDCard()
     digitalWrite(18, LOW); 
     delay(50);
     //1.初始化SD
-    int sd_get_count = 0;
-    while((!SD_MMC.begin())&&(sd_get_count<5))
+    writeLog(cf_node_name+"SD Type:"+String(printer_sd_type));
+
+    if(printer_sd_type==0)
     {
-        digitalWrite(RED_LED, LOW);
-        digitalWrite(GREEN_LED, HIGH);
-        digitalWrite(BLUE_LED, HIGH);
-      
-        delay(100);
-        digitalWrite(RED_LED, HIGH);
-        digitalWrite(GREEN_LED, HIGH);
-        digitalWrite(BLUE_LED, HIGH);  
-        delay(100);
-        sd_get_count++;
-        //break;      
-    } 
+        
+        SPI.begin(14,2,15,13);
+        int sd_get_count = 0;
+        while((!SD.begin(13,SPI,4000000,"/sd",5,false))&&(sd_get_count<5))
+        {
+            digitalWrite(RED_LED, LOW);
+            digitalWrite(GREEN_LED, HIGH);
+            digitalWrite(BLUE_LED, HIGH);
+
+            // DBG_OUTPUT_PORT.println("Not Found SD Card.");
+            // message_display("Not Found SD Card.");        
+            delay(500);
+            digitalWrite(RED_LED, HIGH);
+            digitalWrite(GREEN_LED, HIGH);
+            digitalWrite(BLUE_LED, HIGH);  
+            delay(500);
+            sd_get_count++;
+    //        break;      
+        } 
+    }
+    else if(printer_sd_type==1)
+    {
+        int sd_get_count = 0;
+        while((!SD_MMC.begin())&&(sd_get_count<5))
+        {
+            digitalWrite(RED_LED, LOW);
+            digitalWrite(GREEN_LED, HIGH);
+            digitalWrite(BLUE_LED, HIGH);
+
+            // message_display("Not Found SD Card.");        
+            delay(500);
+            digitalWrite(RED_LED, HIGH);
+            digitalWrite(GREEN_LED, HIGH);
+            digitalWrite(BLUE_LED, HIGH);  
+            delay(500);
+            sd_get_count++;
+        }     
+    }
     digitalWrite(RED_LED, HIGH);
     digitalWrite(GREEN_LED, HIGH);
     digitalWrite(BLUE_LED, HIGH);
-    uint8_t cardType = SD_MMC.cardType();
-
-    if(cardType == CARD_NONE)
-    {
-        //Serial.println("No SD_MMC card attached");
-        //return;
-    }  
+   
 }
 
 void filamentDetect()
@@ -612,11 +763,7 @@ void filamentDetect()
 void ServerProcess::serverLoop()
 {
 //    server.handleClient();
-    if (rst_usb == true)
-    {
-        reset559();
-        rst_usb = false;
-    }
+
     if (g_status==PRINTING)
     {
       digitalWrite(RED_LED, HIGH);
@@ -629,6 +776,11 @@ void ServerProcess::serverLoop()
       digitalWrite(RED_LED, HIGH);
       digitalWrite(GREEN_LED, LOW);
       digitalWrite(BLUE_LED, HIGH);
+      if (rst_usb == true)
+      {
+          reset559();
+          rst_usb = false;
+      }
     }
     if(paused_for_user&&(!paused_for_filament))
     {

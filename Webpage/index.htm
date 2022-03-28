@@ -108,7 +108,7 @@
 		<div class="row">
 			<form class="form-inline">
 			  <div class="form-group">
-				<label for="exampleInputName2">Hotend</label>
+				<label for="temp-head">Hotend</label>
 				<input type="text" class="form-control form-control1" id="temp-head" placeholder="195">
 				<button type="button" class="btn btn-default" id="set-head">Set</button>
 			  </div>
@@ -116,7 +116,7 @@
 				<br/>
 				<br/>
 			  <div class="form-group">
-				<label for="exampleInputEmail2">Hotbed</label>
+				<label for="temp-bed">Hotbed</label>
 				<input type="text" class="form-control form-control1" id="temp-bed" placeholder="50">
 				  <button type="button" class="btn btn-default" id="set-bed">Set</button>
 			  </div>
@@ -136,16 +136,21 @@
 		</div>
 		<hr/>
 		<div class="row">
-				<div class="col-xs-4">
-					<button class="btn btn-default" type="button" id="update-list">Update Filelist</button>
-				</div>
+				<div class="table-responsive">
+						<table class="table">
+							<tr>
+								<td class="active">
+									<button class="btn btn-default btn-block" type="button" id="update-list">Update Filelist</button>
+								</td>
+								<td class="active">
+									<button class="btn btn-default btn-block" type="button" id="release-sd">Unmount SD</button>
+								</td>
 
-				<div class="col-xs-4">
-					<button class="btn btn-default" type="button" id="release-sd">Unmount SD</button>
-				</div>
-
-				<div class="col-xs-4">
-					<button class="btn btn-default" type="button" id="get-sd">Mount SD</button>
+								<td class="active">
+									<button class="btn btn-default btn-block" type="button" id="get-sd">Mount SD</button>
+								</td>
+							</tr>
+						</table>
 				</div>
 			
 		</div>
@@ -195,25 +200,55 @@
 		<br/>
 		
 		
-		<hr>
-			<button class="btn btn-default" type="button" id="btn-pause">Pause</button>
-			<button class="btn btn-default" type="button" id="btn-cancle">Cancle</button>
-			<button class="btn btn-default" type="button" id="btn-restart">ResetESP</button>
-			<button class="btn btn-default" type="button" id="btn-resethost">GetPrinter</button>
-			<hr>
+
+		<div class="row">
+				<div class="table-responsive">
+						<table class="table">
+							<tr>
+								<td class="active">
+									<button class="btn btn-default  btn-block" type="button" id="btn-pause">Pause</button>
+								</td>
+
+								<td class="active">
+									<button class="btn btn-default  btn-block" type="button" id="btn-cancle">Cancle</button>
+								</td>
+								
+								<td class="active">
+										<button class="btn btn-default  btn-block" type="button" id="btn-restart">Resume</button>
+								</td>
+							</tr>
+								
+							<tr>
+									<td class="active">
+										<button class="btn btn-default  btn-block" type="button" id="btn-resethost">GetPrinter</button>
+									</td>
+
+									<td class="active">
+										<button class="btn btn-default  btn-block" type="button" id="btn-setsdio">SetSDIO</button>
+									</td>
+										
+									<td class="active">
+										
+										<button class="btn btn-default  btn-block" type="button" id="btn-setspi">SetSPI</button>
+									</td>
+							</tr>
+						</table>
+				</div>
+		</div>
+
 	
 		<br/>
-		<div>
-					<label for="gcode-lineedit">Gcode</label>
-					<input type="text" class="btn btn-default"  id="gcode-lineedit" placeholder="G28">
+		<div class="row">
+			<label for="gcode-lineedit">Gcode</label>
+			<input type="text" class="btn btn-default"  id="gcode-lineedit" placeholder="G28">
 
-			  <button type="button" class="btn btn-default" id="btn-send-gcode">Send</button>
-			  <button type="button" class="btn btn-default" id="btn-send-clear">Clear</button>
+			<button type="button" class="btn btn-default" id="btn-send-gcode">Send</button>
+			<button type="button" class="btn btn-default" id="btn-send-clear">Clear</button>
 		
 		</div>	
 		<br/>
 		<br/>
-		<div>
+		<div class="row">
 				<textarea class="form-control" rows="12" id="serial-console"></textarea>
 		</div>
 		

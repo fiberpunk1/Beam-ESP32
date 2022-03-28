@@ -31,6 +31,8 @@ bool rst_usb = false;
 bool paused_for_user = false;
 bool paused_for_filament = false;
 
+//printer sd type: 0==spi  1==sdio
+uint8_t printer_sd_type = 1;
 unsigned char current_usb_status = 0;
 unsigned char pre_usb_status = 0;
 
@@ -46,6 +48,7 @@ void writeLog(String log_txt)
 {
     // if(g_status==PRINTING)
     {
+        events.send(log_txt.c_str(), "gcode_cli");
         sendHttpMsg(log_txt);
     }
 }

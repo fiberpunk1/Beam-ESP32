@@ -203,6 +203,10 @@ uploadButton.onclick = () => {
     if(input.files.length === 0){
         return;
     }
+    var fileListM = document.getElementById("file-list-frame");
+    while(fileListM.hasChildNodes()){
+        fileListM.removeChild(fileListM.lastChild)
+    }
     xmlHttp = new XMLHttpRequest();
     // xmlHttp.onreadystatechange = httpPostProcessRequest;
     xmlHttp.onload = uploadComplete;
@@ -269,8 +273,10 @@ source.addEventListener('gcode_cli', function(e) {
    var reg_t = /T:([0-9]*\.[0-9]*) *\/([0-9]*\.[0-9]*)/g;
    var reg_b = /B:([0-9]*\.[0-9]*) *\/([0-9]*\.[0-9]*)/g;
    var reg_p = /SD printing byte ([0-9]*)\/([0-9]*)/g;
-   var reg_af = /Current file:([\S\s]*).GCO/g;
-   var reg_f = /Current file:([\S\s]*).GCO ([\S\s]*).gcode/g;
+   var reg_f = /Current file:([\S\s]*).GCO/g;
+   var reg_af = /Current file:([\S\s]*).GCO ([\S\s]*).gcode/g;
+   var reg_prusa = /:([\S\s]*).gcode/g;
+   var reg_short_low = /:([\S\s]*).gco/g;
    var reg_end = /Finish/g;
 
    var heater = obj.match(reg_t);
@@ -311,6 +317,19 @@ source.addEventListener('gcode_cli', function(e) {
     if(print_ful_name){
         var printFileElement = document.getElementById("print-file");
         printFileElement.innerHTML = RegExp.$2 + ".gcode";
+    }
+
+    
+    var print_prusa_short = obj.match(reg_short_low);
+    if(print_prusa_short){
+        var printFileElement = document.getElementById("print-file");
+        printFileElement.innerHTML = RegExp.$1 + ".GCO";
+    }
+
+    var print_prusa_name = obj.match(reg_prusa);
+    if(print_prusa_name){
+        var printFileElement = document.getElementById("print-file");
+        printFileElement.innerHTML = RegExp.$1 + ".gcode";
     }
 
     var b_finish = obj.match(reg_end);
@@ -380,6 +399,8 @@ const pauseButton = document.getElementById("btn-pause");
 const cancleButton = document.getElementById("btn-cancle");
 const restartButton = document.getElementById("btn-restart");
 const resethostButton = document.getElementById("btn-resethost");
+const setSPIButton = document.getElementById("btn-setspi");
+const setSDIOButton = document.getElementById("btn-setsdio");
 
 xpButton.onclick = () => {
     var step = getRadioValue();
@@ -498,7 +519,7 @@ cancleButton.onclick = () => {
 }
 
 restartButton.onclick = () => {
-    var tt_url = "/esprestart";
+    var tt_url = "/operate?op=RECOVER";
     xmlHttp = new XMLHttpRequest();
     xmlHttp.open("GET", tt_url);
     xmlHttp.send();
@@ -506,6 +527,23 @@ restartButton.onclick = () => {
 
 resethostButton.onclick = () => {
     var tt_url = "/resetusb";
+    xmlHttp = new XMLHttpRequest();
+    xmlHttp.open("GET", tt_url);
+    xmlHttp.send();
+}
+
+setSPIButton.onclick = () => {
+    alert("After switching the SD data reading method, please must repower your Node and 3D printer.");
+    var tt_url = "/setsdtype?type=SPI";
+    xmlHttp = new XMLHttpRequest();
+    xmlHttp.open("GET", tt_url);
+    xmlHttp.send();
+}
+
+
+setSDIOButton.onclick = () => {
+    alert("After switching the SD data reading method, please must repower your Node and 3D printer.");
+    var tt_url = "/setsdtype?type=SDIO";
     xmlHttp = new XMLHttpRequest();
     xmlHttp.open("GET", tt_url);
     xmlHttp.send();
