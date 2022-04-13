@@ -64,8 +64,8 @@ This document is used to describe the API design of the Node module.
 
 |Parameter Name|Type|Description|
 |:-----:  |:-----:|-----                           |
-|type |字符串   |The current type of this name, file or directory|
-|name |字符串   |File or directory name|
+|type |string   |The current type of this name, file or directory|
+|name |string   |File or directory name|
 
 **Remarks**
 
