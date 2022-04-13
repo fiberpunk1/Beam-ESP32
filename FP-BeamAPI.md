@@ -1,47 +1,52 @@
-本文档用于描述Beam模块的API设计。
+## 1. API interface description
+
+This document is used to describe the API design of the Node module.
 
 ---
 
-### 1.寻找设备API
+### 1.Find Device API
 
-##### 简要描述
+**Brief description**
 
-- 提供一个http的API，让客户端扫描发送，如果ESP32收到这个API，会返回自己的设备名
-- 如果是之前已经连接过，会返回当前设备的状态
+- Provide an http API for the client to search Node device, and if Node receives this network request, it will return its own device name
+- If it has been connected before, it will return the status of the current device
 
-##### 请求URL
-- ` http://192.168.1.133/find `
+**Request URL**
+- ` http://192.168.1.133:88/find `
 
-##### 请求方式
+**Request Method**
 - GET 
 
-##### 参数
+**Parameters**
 
-- 无
+- None
 
-##### 返回示例 
+**Return Example**
+
 ```
- Beam-ESP32-Name:192.168.1.133:PRINTING
+ Beam-Node-Name:192.168.1.133:PRINTING
 ```
->注意:如果是在打印中，才会返回后面的PRINTING,第一次连接，不会返回改字符串
+>Note: If it is in the print, only after the PRINTING will return, the first connection, will not return to change the string
 
 ---
 
-### 2. 获取文件目录信息
+### 2. Get file directory information
 
-##### 简要描述
+**Brief description**
 
-- 获取SD卡中所有的文件目录信息
+- Get all the file directory information in the SD card
 
-##### 请求URL
-- ` http://192.168.1.133/list
+**Request URL**
+- ` http://192.168.1.133:88/list?dir=/ `
   
-##### 请求方式
+**Request Method**
 - GET
 
-##### 参数
-- 无
-##### 返回示例 
+**Parameters**
+- None
+
+**Return Example**
+
 
 ```
 [
@@ -51,200 +56,216 @@
 ]
 ```
 
-##### 返回参数说明 
+**Return error code**
 
-|参数名|类型|说明|
+"NOT DIR" No directory is generally caused by the Node not being able to obtain the SD card. This error is returned when the printer is printing on an occupied SD card. If the Node fails to mount the SD card, it will also return a change error.
+
+**Return parameter description**
+
+|Parameter Name|Type|Description|
 |:-----:  |:-----:|-----                           |
-|type |字符串   |当前这个name的类型，文件还是目录  |
-|name |字符串   |文件或者目录名称  |
+|type |字符串   |The current type of this name, file or directory|
+|name |字符串   |File or directory name|
 
-##### 备注 
+**Remarks**
 
-- 当前使用的ESP32文件系统，不支持文件夹的访问，因此所有的打印文件都要放在sd卡的根目录下面
+- The Node file system currently in use does not support folder access, so all print files should be placed under the root directory of the sd card
 
 ---
 
-### 3. 上传文件
+### 3. Upload files
 
-##### 简要描述
+**Brief description**
 
-- 用户上传文件
+- User uploads files
 
-##### 请求URL
-- ` http://192.168.1.133/edit `
+**Request URL**
+- ` http://192.168.1.133:88/edit `
   
-##### 请求方式
+**Request Method**
 - POST
 
-##### 参数
+**Parameters**
 
-- 以表单的方式上传文件
+- Uploading files as a form
 
-##### 返回示例 
+**Return Example**
 
-- 上传完成，返回ok
+- Upload completed, return ok
 
-##### 返回参数说明 
+**Return parameter description**
 
-- 无
+- None
 
-##### 备注 
+**Remarks**
 
-- 无
+- None
 
 ---
 
-### 4. 删除文件
+### 4. Delete files
 
-##### 简要描述
+**Brief description**
 
-- 用户删除sd卡中的文件
+- User deletes files from the sd card
 
-##### 请求URL
-- ` http://192.168.1.133/remove?path=/xxx.gcode `
+**Request URL**
+- ` http://192.168.1.133:88/remove?path=/xxx.gcode `
 
-##### 请求方式
+**Request Method**
 - DELETE
 
-##### 参数
+**Parameters**
 
-- 在url中指定path=/xxx.gcode ，就是要删除的那个文件
+- Specify path=/xxx.gcode in the url, which is the file to be deleted
 
-##### 返回示例 
-- 删除完成，返回ok
+**Return Example**
+- Delete completed, return ok
 
-##### 返回参数说明 
-- 无
+**Return parameter description**
+- None
 
-##### 备注
-- 无
+**Return error code**"BAD PATH" means no file exists to change, this error will also appear when Node cannot get the SD card.
 
----
-
-### 5. 发送PC地址给ESP32,并建立socket
-
-##### 简要描述
-
-- 发送PC本机的IP地址给ESP32，ESP32收到后，会创建一个socket，来连接PC端的socket，这样建立一个长连接， ESP32就可以主动发送信息给PC端，通知他做一些事情
-
-##### 请求URL
-- ` http://192.168.1.133/pcsocket?ip=192.168.1.1 `
-
-##### 请求方式
-- GET
-
-##### 参数
-- 在url中指定PC自己的IP地址
-
-##### 返回示例 
-- 创建完成，返回ok
-
-##### 返回参数说明 
-- 无
-
-##### 备注
-- 无
+**Remarks**
+- None
 
 ---
 
-### 6. 发送Gcode控制指令
+### 5. Send PC address to Node, create socket and connect to BeamNexcus
 
-##### 简要描述
+**Brief description**
 
-- 使用url发送一条Gcode指令给ESP32,ESP32收到后会立即发送给打印机
+- Send the client's IP address to Node, Node will create a socket to connect to the client's socket after receiving it, so that a long connection can be established and Node can actively send information to the client to notify him to do something (need to implement a socket server on the client side, listening to port 1688)
 
-##### 请求URL
-- ` http://192.168.1.133/gcode?gc=G28 X Y `
+- All serial returns from the printer received by Node are sent out through this socket.
 
-##### 请求方式
+**Request URL**
+- ` http://192.168.1.133:88/pcsocket?ip=192.168.1.1 `
+
+**Request Method**
 - GET
 
-##### 参数
-- 在url中指定设定要发送的Gcode指令
+**Parameters**
+- Specify the client's own IP address in the url
 
-##### 返回示例 
-- 创建完成，返回ok
+**Return Example**
+- Create completed, return ok
+- socket connection creation failed, return Connect PC failed
 
-##### 返回参数说明 
-- 无
+**Return parameter description**
+- None
 
-##### 备注
-- 无
+**Remarks**
+- None
 
 ---
 
-### 7. 开始打印
-##### 简要描述
+### 6. Sending Gcode control commands
 
-- 在url中指定一个sd卡中包含的文件，通知esp32进行打印
+**Brief description**
 
-##### 请求URL
-- ` http://192.168.1.133/print?filename=/xxx.gcode `
+- Send a Gcode command to Node using the url, Node will send it to the printer as soon as it receives it.
 
-##### 请求方式
+**Request URL**
+- ` http://192.168.1.133:88/gcode?gc=G28 X Y `
+
+**Request Method**
 - GET
 
-##### 参数
-- 在url中指定设定要发送的Gcode指令
+**Parameters**
+- Specify the Gcode command to be sent in the url
 
-##### 返回示例 
-- 执行完成，返回ok
+**Return Example**
+- Create completed, return ok
 
-##### 返回参数说明 
-- 无
+**Return parameter description**
+- None
 
-##### 备注
-- 打印的文件，都是从前面的获取到的sd卡文件列表中选取的
+**Remarks**
+- None
 
 ---
 
-### 8. 控制打印暂停，恢复，取消
-##### 简要描述
+### 7. Start printing**Brief description**
 
-- 通过url控制打印机打印，暂停，取消，恢复
+- Specify in the url a gcode file (DOS 8.3 format) contained in the sd card to notify Node to print
 
-##### 请求URL
-- ` http://192.168.1.133/operate?op=PAUSE `
+**Request URL**
+- ` http://192.168.1.133:88/print?filename=/xxx.gcode `
 
-##### 请求方式
+**Request Method**
 - GET
 
-##### 参数
+**Parameters**
+- Specify the Gcode command to be sent in the url
+
+**Return Example**
+- Execution complete, return ok
+
+**Return parameter description**
+- None
+
+**Remarks**
+- The files printed are selected from the list of sd card files obtained in the previous
+- The file name needs to be in DOS 8.3 format
+
+---
+
+### 8. Control printing pause, resume, cancel, etc.
+
+**Brief description**
+
+- Control printer print,pause,cancel,resume,Node mount SD card,Node unmount SD card by url
+
+**Request URL**
+- ` http://192.168.1.133:88/operate?op=PAUSE `
+
+**Request Method**
+- GET
+
+**Parameters**
 - PAUSE 
 - RECOVER
 - CANCLE
+- GETSD
+- RELEASESD
 
-##### 返回示例 
-- 执行完成，返回ok
+**Return Example**
+- Execution complete, return ok
 
-##### 返回参数说明 
-- 无
+**Return parameter description**
+- None
 
-##### 备注
-- 无
+**Return error code**"NO PRINTER" means that the USB connection between the Node's USB and the printer has failed and the USB connection needs to be re-established
+
+**Remarks**
+- None
 
 ---
 
-### 9. 获取打印机的状态
+### 9. Get the status of the printer
 
-##### 简要描述
+**Brief description**
 
-- 获取打印机的一些状态字符串，包括: 喷头温度，热床温度，总层数，当前打印层数
+- Get some status strings of the printer, including: Printhead temperature, hot bed temperature, total number of layers, current number of layers printed
+- This can be replaced by sending a query to gcode and then getting the socket data back in real time to know the status of the printer
 
-##### 请求URL
-- ` http://192.168.1.133/status
+**Request URL**
+- ` http://192.168.1.133:88/status`
 
-##### 请求方式
+**Request Method**
 - GET
 
-##### 参数
-- 无
+**Parameters**
+- None
 
-##### 返回示例 
-- 执行完成，返回ok
+**Return Example**
+- Execution complete, return ok
 
-##### 返回参数说明 
-- 返回的是一些列的字符串，前端得到这些数据后，需要使用正则来获取自己想要的信息，一个典型的返回字符串如下:
+**Return parameter description**
+- The return is a number of columns of strings, the front-end to get this data, you need to use the regular to get the information they want, a typical return string is as follows:
+
 
 ```
 ;LAYER_COUNT:90,;LAYER:4,
@@ -252,12 +273,61 @@ B: 23.4 /40  T: 100.3/210
 
 ```
 
-##### 备注
-- 此处返回的是打印机直接返回的内容，属于直接转发，这个url可以每间隔几秒发送一次，以此来更新前端的显示状态
+**Remarks**
+- The content returned here is directly returned by the printer, which belongs to direct forwarding, and this url can be sent every few seconds to update the display status of the front-end
 
+### 10. Re-establish USB connection
 
+**Brief description**
 
+- If the 3D printer is plugged into the Node's USB-A and the Node does not automatically detect the USB access, you can use this request to recheck the USB device.
 
+**Request URL**
+- ` http://192.168.1.133:88/resetusb`
 
+**Request Method**
+- GET
 
+**Parameters**
+- None
 
+**Return Example**
+- Execution complete, return ok
+
+### 11. Setting up the Node's SD card communication protocol
+
+**Brief description**
+
+- Different 3D printer motherboards use different protocols for SD cards, mainly SDIO and SPI. This API allows user to set which SD card protocol the Node uses. After setting to this, the selection will be recorded and saved by power off.
+
+**Request URL**
+- ` http://192.168.1.133:88/setsdtype?type=SPI`
+
+**Request Method**
+- GET
+
+**Parameters**
+- type
+    - "SPI"
+    - "SDIO"
+
+**Return Example**
+- Execution complete, return ok
+
+### 12. Get Node's firmware version information
+
+**Brief description**
+
+- This API user gets the version information of the Node firmware.
+
+**Request URL**
+- ` http://192.168.1.133:88/version`
+
+**Request Method**
+- GET
+
+**Parameters**
+- None
+
+**Return Example**
+- Execution complete, return version information
