@@ -21,7 +21,7 @@
 #include "crc8.h"
 #include "FiberPunk_SSD1306.h"
 
-#define VERSION "2022-3-27-2002"
+#define VERSION "2022-3-29-2002-PRUSA-MK3S"
 #define DBG_OUTPUT_PORT Serial
 #define PRINTER_PORT Serial
 #define RED_LED 26
@@ -33,6 +33,12 @@
 // Declaration for an SSD1306 display connected to I2C (SDA, SCL pins)
 #define OLED_RESET     -1 // Reset pin # (or -1 if sharing Arduino reset pin)
 #define SCREEN_ADDRESS 0x3C ///< See datasheet for Address; 0x3D for 128x64, 0x3C for 128x32
+
+
+
+
+
+
 
 enum OP_STATUS
 {
@@ -67,6 +73,7 @@ extern String current_layers;
 extern String current_temp;
 extern String current_bed_temp;
 extern String pc_ipaddress;
+extern String current_file;
 
 extern OP_STATUS g_status;
 extern ERROR_CODE g_error;
