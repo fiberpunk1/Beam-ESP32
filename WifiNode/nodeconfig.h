@@ -41,7 +41,7 @@ enum OP_STATUS
   PAUSE=2,
   RECOVER=3,
   CANCEL=4,
-  HEEATING=5,
+  HEATING=5,
 };
 
 enum ERROR_CODE
