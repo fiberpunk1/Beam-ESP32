@@ -227,7 +227,7 @@ This document is used to describe the API design of the Node module.
 **Parameters**
 - PAUSE 
 - RECOVER
-- CANCLE
+- CANCEL
 - GETSD
 - RELEASESD
 

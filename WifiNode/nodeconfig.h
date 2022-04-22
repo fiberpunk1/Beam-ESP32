@@ -40,7 +40,7 @@ enum OP_STATUS
   PRINTING=1,
   PAUSE=2,
   RECOVER=3,
-  CANCLE=4,
+  CANCEL=4,
   HEEATING=5,
 };
 

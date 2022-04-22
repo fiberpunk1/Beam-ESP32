@@ -1,410 +1,618 @@
-<!doctype html>
+<!DOCTYPE html>
 <head>
-<meta name="viewport"
-			content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<link rel="stylesheet" type="text/css" href="bootstrap.css">
-<link rel="stylesheet" type="text/css" href="index.css">
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no"
+  />
+  <link rel="stylesheet" type="text/css" href="bootstrap.css" />
+  <link rel="stylesheet" type="text/css" href="index.css" />
 </head>
 <html lang="en">
-<body>
-<div class="container">
+  <body>
+    <div class="container">
+      <div class="row">
+        <div class="col-xs-12 col-md-6">
+          <div class="row">
+            <br />
+            <img class="logo" src="logo.png" />
+          </div>
+          <div class="row">
+            <br />
+            <div class="table-responsive">
+              <table class="table">
+                <tr>
+                  <td class="active">
+                    <label class="radio-inline">
+                      <input
+                        type="radio"
+                        name="stepRadio"
+                        id="inlineRadio1"
+                        value="0.1"
+                      />
+                      0.10
+                    </label>
+                  </td>
 
-   <div class="row">
-      <div class="col-xs-12 col-md-6">
-	   <div class = row>
-			 <br>
-				<img class="logo" src="logo.png">
-		 </div>
-		<div class="row">
-				 <br>
-				<div class="table-responsive">
-					<table class="table">
-					
-					<tr>
-						<td class="active">
-							<label class="radio-inline">
-								<input type="radio" name="stepRadio" id="inlineRadio1" value="0.1"> 0.10
-							</label>
-						</td>
-						
-						<td class="active">
-								<label class="radio-inline">
-								<input type="radio" name="stepRadio" id="inlineRadio2" value="1.0" checked> 1.00
-							</label>
-						</td>
-						
-						<td class="active">
-							<label class="radio-inline">
-								<input type="radio" name="stepRadio" id="inlineRadio3" value="5.0"> 5.00
-							</label>
-						</td>
-						
-						<td class="active">
-							<label class="radio-inline">
-								<input type="radio" name="stepRadio" id="inlineRadio4" value="10.0"> 10.0
-							</label>
-						</td>
-						
-					</tr>
-					
-					
-					<tr>
-						<td class="active">
-							<button class="btn btn-default btn-block" type="button" id="x-p">X+</button>
-						</td>
-						
-						<td class="active">
-							<button class="btn btn-default btn-block" type="button" id="x-d">X-</button>
-						</td>
-						
-						<td class="active">
-							<button class="btn btn-default btn-block" type="button" id="y-p">Y+</button>
-						</td>
-						
-						<td class="active">
-							<button class="btn btn-default btn-block" type="button" id="y-d">Y-</button>
-						</td>
-					</tr>
-					
-					<tr>
-						<td class="active">
-							<button class="btn btn-default btn-block" type="button" id="z-p">Z+</button>
-						</td>
-						
-						<td class="active">
-							<button class="btn btn-default btn-block" type="button" id="z-d">Z-</button>
-						</td>
-						
-						<td class="active">
-							<button class="btn btn-default btn-block" type="button" id="e-p">E+</button>
-						</td>
-						
-						<td class="active">
-							<button class="btn btn-default btn-block" type="button" id="e-d">E-</button>
-						</td>
-					</tr>
-					
-					<tr>
-						<td class="active">
-							<button class="btn btn-default btn-block" type="button" id="home">Home All</button>
-						</td>
-						
-						<td class="active">
-							<button class="btn btn-default btn-block" type="button" id="home-x">Home X</button>
-						</td>
-						
-						<td class="active">
-							<button class="btn btn-default btn-block" type="button" id="home-y">Home Y</button>
-						</td>
-						
-						<td class="active">
-							<button class="btn btn-default btn-block" type="button" id="home-z"><span class='glyphicon glyphicon-print' aria-hidden='true'></span>Home Z</button>
-						</td>
-					</tr>
-					</table>
-				</div>
-		</div>
-		<br>
-		<div class="row">
-			<form class="form-inline">
-			  <div class="form-group">
-				<label for="temp-head">Hotend</label>
-				<input type="text" class="form-control form-control1" id="temp-head" placeholder="195">
-				<button type="button" class="btn btn-default" id="set-head">Set</button>
-			  </div>
-				
-				<br/>
-				<br/>
-			  <div class="form-group">
-				<label for="temp-bed">Hotbed</label>
-				<input type="text" class="form-control form-control1" id="temp-bed" placeholder="50">
-				  <button type="button" class="btn btn-default" id="set-bed">Set</button>
-			  </div>
-			
-			</form>
-		</div>
-		
-		<hr/>
-		<div class="row">
-			<div class="form-group">
-				<form method="POST" class="form" action="/edit" enctype="multipart/form-data">
-					<input type="file" name="data" id="choose-file"/>
-					<button type="button" class="btn btn-default" id="upload-file">Upload</button>
-				</form>
-			</div>
-			
-		</div>
-		<hr/>
-		<div class="row">
-				<div class="table-responsive">
-						<table class="table">
-							<tr>
-								<td class="active">
-									<button class="btn btn-default btn-block" type="button" id="update-list">Update Filelist</button>
-								</td>
-								<td class="active">
-									<button class="btn btn-default btn-block" type="button" id="release-sd">Unmount SD</button>
-								</td>
+                  <td class="active">
+                    <label class="radio-inline">
+                      <input
+                        type="radio"
+                        name="stepRadio"
+                        id="inlineRadio2"
+                        value="1.0"
+                        checked
+                      />
+                      1.00
+                    </label>
+                  </td>
 
-								<td class="active">
-									<button class="btn btn-default btn-block" type="button" id="get-sd">Mount SD</button>
-								</td>
-							</tr>
-						</table>
-				</div>
-			
-		</div>
-		
-		<hr/>
-		<div class="row">
-				<div class="table-responsive">
-					<table class="table" id="file-list-frame">
-					</table>
-				</div>
-		</div>
-		<br>
-		<div class="jd">
-			<progress class="jd1" id="progressbar" value="0" max="100"></progress>
-		</div>
-		
-	  </div>
-	  
-      <div class="col-xs-12 col-md-6">
-		<br>
-		<br>
-		<br>
-		<br>
-		<br>
-		<br>
-		<div class="c-flex">
-		<div>
-			<label for="hotbed-display">Hotbed: </label>
-			<p style="color:rgb(218, 19, 19); font-size:18px; font-weight:bold;"><span id="hotbed-display">0</span><span>&deg;C</span></p>
-		</div>
+                  <td class="active">
+                    <label class="radio-inline">
+                      <input
+                        type="radio"
+                        name="stepRadio"
+                        id="inlineRadio3"
+                        value="5.0"
+                      />
+                      5.00
+                    </label>
+                  </td>
 
-		<div>
-			<label for="hothead-display">Hothead: </label>
-			<p style="color:rgb(218, 19, 19); font-size:18px; font-weight:bold;"><span id="hothead-display">0</span><span>&deg;C</span></p>
-		</div>
-		
-		<div>
-			<label for="print-progess">Progress: </label>
-			<p style="color:rgb(255, 179, 0); font-size:18px; font-weight:bold;"><span id="print-progess">0</span><span>%</span></p>
-		</div>
-		
-		<div>
-			<label for="print-file">Print file: </label>
-			<p  style="color:rgb(255, 179, 0); font-size:18px; font-weight:bold;"><span id="print-file">no file</span></p>
-		</div>	
-</div>
-		<br/>
-		
-		
+                  <td class="active">
+                    <label class="radio-inline">
+                      <input
+                        type="radio"
+                        name="stepRadio"
+                        id="inlineRadio4"
+                        value="10.0"
+                      />
+                      10.0
+                    </label>
+                  </td>
+                </tr>
 
-		<div class="row">
-				<div class="table-responsive">
-						<table class="table">
-							<tr>
-								<td class="active">
-									<button class="btn btn-default  btn-block" type="button" id="btn-pause">Pause</button>
-								</td>
+                <tr>
+                  <td class="active">
+                    <button
+                      class="btn btn-default btn-block"
+                      type="button"
+                      id="x-p"
+                    >
+                      X+
+                    </button>
+                  </td>
 
-								<td class="active">
-									<button class="btn btn-default  btn-block" type="button" id="btn-cancle">Cancle</button>
-								</td>
-								
-								<td class="active">
-										<button class="btn btn-default  btn-block" type="button" id="btn-restart">Resume</button>
-								</td>
-							</tr>
-								
-							<tr>
-									<td class="active">
-										<button class="btn btn-default  btn-block" type="button" id="btn-resethost">GetPrinter</button>
-									</td>
+                  <td class="active">
+                    <button
+                      class="btn btn-default btn-block"
+                      type="button"
+                      id="x-d"
+                    >
+                      X-
+                    </button>
+                  </td>
 
-									<td class="active">
-										<button class="btn btn-default  btn-block" type="button" id="btn-setsdio">SetSDIO</button>
-									</td>
-										
-									<td class="active">
-										
-										<button class="btn btn-default  btn-block" type="button" id="btn-setspi">SetSPI</button>
-									</td>
-							</tr>
-						</table>
-				</div>
-		</div>
+                  <td class="active">
+                    <button
+                      class="btn btn-default btn-block"
+                      type="button"
+                      id="y-p"
+                    >
+                      Y+
+                    </button>
+                  </td>
 
-	
-		<br/>
-		<div class="row">
-			<label for="gcode-lineedit">Gcode</label>
-			<input type="text" class="btn btn-default"  id="gcode-lineedit" placeholder="G28">
+                  <td class="active">
+                    <button
+                      class="btn btn-default btn-block"
+                      type="button"
+                      id="y-d"
+                    >
+                      Y-
+                    </button>
+                  </td>
+                </tr>
 
-			<button type="button" class="btn btn-default" id="btn-send-gcode">Send</button>
-			<button type="button" class="btn btn-default" id="btn-send-clear">Clear</button>
-		
-		</div>	
-		<br/>
-		<br/>
-		<div class="row">
-				<textarea class="form-control" rows="12" id="serial-console"></textarea>
-		</div>
-		
-	  </div>
-	     
-   </div>
+                <tr>
+                  <td class="active">
+                    <button
+                      class="btn btn-default btn-block"
+                      type="button"
+                      id="z-p"
+                    >
+                      Z+
+                    </button>
+                  </td>
 
-</div>
+                  <td class="active">
+                    <button
+                      class="btn btn-default btn-block"
+                      type="button"
+                      id="z-d"
+                    >
+                      Z-
+                    </button>
+                  </td>
 
-<br /><br />
-<br /><br /><br /><br />
-<!-- <canvas id="space"></canvas> -->
+                  <td class="active">
+                    <button
+                      class="btn btn-default btn-block"
+                      type="button"
+                      id="e-p"
+                    >
+                      E+
+                    </button>
+                  </td>
 
-		<a href="#" id="warp">WARP SPEED</a>
-		<script>
-			//based on an Example by @curran
-			window.requestAnimFrame = (function() {
-				return window.requestAnimationFrame
-			})();
-			var canvas = document.getElementById("space");
-			var c = canvas.getContext("2d");
+                  <td class="active">
+                    <button
+                      class="btn btn-default btn-block"
+                      type="button"
+                      id="e-d"
+                    >
+                      E-
+                    </button>
+                  </td>
+                </tr>
 
-			var numStars = 1900;
-			var radius = '0.' + Math.floor(Math.random() * 9) + 1;
-			var focalLength = canvas.width * 2;
-			var warp = 0;
-			var centerX, centerY;
+                <tr>
+                  <td class="active">
+                    <button
+                      class="btn btn-default btn-block"
+                      type="button"
+                      id="home"
+                    >
+                      Home All
+                    </button>
+                  </td>
 
-			var stars = [],
-				star;
-			var i;
+                  <td class="active">
+                    <button
+                      class="btn btn-default btn-block"
+                      type="button"
+                      id="home-x"
+                    >
+                      Home X
+                    </button>
+                  </td>
 
-			var animate = true;
+                  <td class="active">
+                    <button
+                      class="btn btn-default btn-block"
+                      type="button"
+                      id="home-y"
+                    >
+                      Home Y
+                    </button>
+                  </td>
 
-			initializeStars();
+                  <td class="active">
+                    <button
+                      class="btn btn-default btn-block"
+                      type="button"
+                      id="home-z"
+                    >
+                      <span
+                        class="glyphicon glyphicon-print"
+                        aria-hidden="true"
+                      ></span
+                      >Home Z
+                    </button>
+                  </td>
+                </tr>
+              </table>
+            </div>
+          </div>
+          <br />
+          <div class="row">
+            <form class="form-inline">
+              <div class="form-group">
+                <label for="temp-head">Hotend</label>
+                <input
+                  type="text"
+                  class="form-control form-control1"
+                  id="temp-head"
+                  placeholder="195"
+                />
+                <button type="button" class="btn btn-default" id="set-head">
+                  Set
+                </button>
+              </div>
 
-			function executeFrame() {
+              <br />
+              <br />
+              <div class="form-group">
+                <label for="temp-bed">Hotbed</label>
+                <input
+                  type="text"
+                  class="form-control form-control1"
+                  id="temp-bed"
+                  placeholder="50"
+                />
+                <button type="button" class="btn btn-default" id="set-bed">
+                  Set
+                </button>
+              </div>
+            </form>
+          </div>
 
-				if (animate)
-					requestAnimFrame(executeFrame);
-				moveStars();
-				drawStars();
-			}
+          <hr />
+          <div class="row">
+            <div class="form-group">
+              <form
+                method="POST"
+                class="form"
+                action="/edit"
+                enctype="multipart/form-data"
+              >
+                <input type="file" name="data" id="choose-file" />
+                <button type="button" class="btn btn-default" id="upload-file">
+                  Upload
+                </button>
+              </form>
+            </div>
+          </div>
+          <hr />
+          <div class="row">
+            <div class="table-responsive">
+              <table class="table">
+                <tr>
+                  <td class="active">
+                    <button
+                      class="btn btn-default btn-block"
+                      type="button"
+                      id="update-list"
+                    >
+                      Update Filelist
+                    </button>
+                  </td>
+                  <td class="active">
+                    <button
+                      class="btn btn-default btn-block"
+                      type="button"
+                      id="release-sd"
+                    >
+                      Unmount SD
+                    </button>
+                  </td>
 
-			function initializeStars() {
-				centerX = canvas.width / 2;
-				centerY = canvas.height / 2;
+                  <td class="active">
+                    <button
+                      class="btn btn-default btn-block"
+                      type="button"
+                      id="get-sd"
+                    >
+                      Mount SD
+                    </button>
+                  </td>
+                </tr>
+              </table>
+            </div>
+          </div>
 
-				stars = [];
-				for (i = 0; i < numStars; i++) {
-					star = {
-						x: Math.random() * canvas.width,
-						y: Math.random() * canvas.height,
-						z: Math.random() * canvas.width,
-						o: '0.' + Math.floor(Math.random() * 99) + 1
-					};
-					stars.push(star);
-				}
-			}
+          <hr />
+          <div class="row">
+            <div class="table-responsive">
+              <table class="table" id="file-list-frame"></table>
+            </div>
+          </div>
+          <br />
+          <div class="jd">
+            <progress
+              class="jd1"
+              id="progressbar"
+              value="0"
+              max="100"
+            ></progress>
+          </div>
+        </div>
 
-			function moveStars() {
-				for (i = 0; i < numStars; i++) {
-					star = stars[i];
-					star.z--;
+        <div class="col-xs-12 col-md-6">
+          <br />
+          <br />
+          <br />
+          <br />
+          <br />
+          <br />
+          <div class="c-flex">
+            <div>
+              <label for="hotbed-display">Hotbed: </label>
+              <p
+                style="
+                  color: rgb(218, 19, 19);
+                  font-size: 18px;
+                  font-weight: bold;
+                "
+              >
+                <span id="hotbed-display">0</span><span>&deg;C</span>
+              </p>
+            </div>
 
-					if (star.z <= 0) {
-						star.z = canvas.width;
-					}
-				}
-			}
+            <div>
+              <label for="hothead-display">Hothead: </label>
+              <p
+                style="
+                  color: rgb(218, 19, 19);
+                  font-size: 18px;
+                  font-weight: bold;
+                "
+              >
+                <span id="hothead-display">0</span><span>&deg;C</span>
+              </p>
+            </div>
 
-			function drawStars() {
-				var pixelX, pixelY, pixelRadius;
+            <div>
+              <label for="print-progess">Progress: </label>
+              <p
+                style="
+                  color: rgb(255, 179, 0);
+                  font-size: 18px;
+                  font-weight: bold;
+                "
+              >
+                <span id="print-progess">0</span><span>%</span>
+              </p>
+            </div>
 
-				// Resize to the screen
-				if (canvas.width != window.innerWidth || canvas.width != window.innerWidth) {
-					canvas.width = window.innerWidth;
-					canvas.height = window.innerHeight;
-					initializeStars();
-				}
-				if (warp == 0) {
-					c.fillStyle = "rgba(0,10,20,1)";
-					c.fillRect(0, 0, canvas.width, canvas.height);
-				}
-				c.fillStyle = "rgba(209, 255, 255, " + radius + ")";
-				for (i = 0; i < numStars; i++) {
-					star = stars[i];
+            <div>
+              <label for="print-file">Print file: </label>
+              <p
+                style="
+                  color: rgb(255, 179, 0);
+                  font-size: 18px;
+                  font-weight: bold;
+                "
+              >
+                <span id="print-file">no file</span>
+              </p>
+            </div>
+          </div>
+          <br />
 
-					pixelX = (star.x - centerX) * (focalLength / star.z);
-					pixelX += centerX;
-					pixelY = (star.y - centerY) * (focalLength / star.z);
-					pixelY += centerY;
-					pixelRadius = 1 * (focalLength / star.z);
+          <div class="row">
+            <div class="table-responsive">
+              <table class="table">
+                <tr>
+                  <td class="active">
+                    <button
+                      class="btn btn-default btn-block"
+                      type="button"
+                      id="btn-pause"
+                    >
+                      Pause
+                    </button>
+                  </td>
 
-					c.fillRect(pixelX, pixelY, pixelRadius, pixelRadius);
-					c.fillStyle = "rgba(209, 255, 255, " + star.o + ")";
-					//c.fill();
-				}
-			}
+                  <td class="active">
+                    <button
+                      class="btn btn-default btn-block"
+                      type="button"
+                      id="btn-cancel"
+                    >
+                      Cancel
+                    </button>
+                  </td>
 
-			document.getElementById('warp').addEventListener("click", function(e) {
-				window.c.beginPath();
-				window.c.clearRect(0, 0, window.canvas.width, window.canvas.height);
-				window.warp = warp ? 0 : 1;
-				executeFrame();
-			});
+                  <td class="active">
+                    <button
+                      class="btn btn-default btn-block"
+                      type="button"
+                      id="btn-restart"
+                    >
+                      Resume
+                    </button>
+                  </td>
+                </tr>
 
-			executeFrame();
+                <tr>
+                  <td class="active">
+                    <button
+                      class="btn btn-default btn-block"
+                      type="button"
+                      id="btn-resethost"
+                    >
+                      GetPrinter
+                    </button>
+                  </td>
 
+                  <td class="active">
+                    <button
+                      class="btn btn-default btn-block"
+                      type="button"
+                      id="btn-setsdio"
+                    >
+                      SetSDIO
+                    </button>
+                  </td>
 
-$(function(){
-		
-		var mobile_flag = isMobile();
-		if(mobile_flag){
-				$("#cssmenu > ul > li > a").click(function() {
-					$("#cssmenu ul").hide()
-				})
-		}else{
-				$("#cssmenu > ul > li > a").click(function() {
-					$("#cssmenu ul").show()
-				})
-		}
-	})
- 
- 
- 
- 
-function isMobile() {
-		    var userAgentInfo = navigator.userAgent;
- 
-		    var mobileAgents = [ "Android", "iPhone", "SymbianOS", "Windows Phone", "iPad","iPod"];
- 
-		    var mobile_flag = false;
- 
-		   
-		    for (var v = 0; v < mobileAgents.length; v++) {
-		        if (userAgentInfo.indexOf(mobileAgents[v]) > 0) {
-		            mobile_flag = true;
-		            break;
-		        }
-		    }
-		     var screen_width = window.screen.width;
-		     var screen_height = window.screen.height;    
- 
-		  
-		     if(screen_width < 500 && screen_height < 800){
-		         mobile_flag = true;
-		     }
- 
-		     return mobile_flag;
-		}
-			
-		</script>
+                  <td class="active">
+                    <button
+                      class="btn btn-default btn-block"
+                      type="button"
+                      id="btn-setspi"
+                    >
+                      SetSPI
+                    </button>
+                  </td>
+                </tr>
+              </table>
+            </div>
+          </div>
 
-</body>
-<script src="script.js"></script>
+          <br />
+          <div class="row">
+            <label for="gcode-lineedit">Gcode</label>
+            <input
+              type="text"
+              class="btn btn-default"
+              id="gcode-lineedit"
+              placeholder="G28"
+            />
 
+            <button type="button" class="btn btn-default" id="btn-send-gcode">
+              Send
+            </button>
+            <button type="button" class="btn btn-default" id="btn-send-clear">
+              Clear
+            </button>
+          </div>
+          <br />
+          <br />
+          <div class="row">
+            <textarea
+              class="form-control"
+              rows="12"
+              id="serial-console"
+            ></textarea>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <br /><br />
+    <br /><br /><br /><br />
+    <!-- <canvas id="space"></canvas> -->
+
+    <a href="#" id="warp">WARP SPEED</a>
+    <script>
+      //based on an Example by @curran
+      window.requestAnimFrame = (function () {
+        return window.requestAnimationFrame;
+      })();
+      var canvas = document.getElementById('space');
+      var c = canvas.getContext('2d');
+
+      var numStars = 1900;
+      var radius = '0.' + Math.floor(Math.random() * 9) + 1;
+      var focalLength = canvas.width * 2;
+      var warp = 0;
+      var centerX, centerY;
+
+      var stars = [],
+        star;
+      var i;
+
+      var animate = true;
+
+      initializeStars();
+
+      function executeFrame() {
+        if (animate) requestAnimFrame(executeFrame);
+        moveStars();
+        drawStars();
+      }
+
+      function initializeStars() {
+        centerX = canvas.width / 2;
+        centerY = canvas.height / 2;
+
+        stars = [];
+        for (i = 0; i < numStars; i++) {
+          star = {
+            x: Math.random() * canvas.width,
+            y: Math.random() * canvas.height,
+            z: Math.random() * canvas.width,
+            o: '0.' + Math.floor(Math.random() * 99) + 1,
+          };
+          stars.push(star);
+        }
+      }
+
+      function moveStars() {
+        for (i = 0; i < numStars; i++) {
+          star = stars[i];
+          star.z--;
+
+          if (star.z <= 0) {
+            star.z = canvas.width;
+          }
+        }
+      }
+
+      function drawStars() {
+        var pixelX, pixelY, pixelRadius;
+
+        // Resize to the screen
+        if (
+          canvas.width != window.innerWidth ||
+          canvas.width != window.innerWidth
+        ) {
+          canvas.width = window.innerWidth;
+          canvas.height = window.innerHeight;
+          initializeStars();
+        }
+        if (warp == 0) {
+          c.fillStyle = 'rgba(0,10,20,1)';
+          c.fillRect(0, 0, canvas.width, canvas.height);
+        }
+        c.fillStyle = 'rgba(209, 255, 255, ' + radius + ')';
+        for (i = 0; i < numStars; i++) {
+          star = stars[i];
+
+          pixelX = (star.x - centerX) * (focalLength / star.z);
+          pixelX += centerX;
+          pixelY = (star.y - centerY) * (focalLength / star.z);
+          pixelY += centerY;
+          pixelRadius = 1 * (focalLength / star.z);
+
+          c.fillRect(pixelX, pixelY, pixelRadius, pixelRadius);
+          c.fillStyle = 'rgba(209, 255, 255, ' + star.o + ')';
+          //c.fill();
+        }
+      }
+
+      document.getElementById('warp').addEventListener('click', function (e) {
+        window.c.beginPath();
+        window.c.clearRect(0, 0, window.canvas.width, window.canvas.height);
+        window.warp = warp ? 0 : 1;
+        executeFrame();
+      });
+
+      executeFrame();
+
+      $(function () {
+        var mobile_flag = isMobile();
+        if (mobile_flag) {
+          $('#cssmenu > ul > li > a').click(function () {
+            $('#cssmenu ul').hide();
+          });
+        } else {
+          $('#cssmenu > ul > li > a').click(function () {
+            $('#cssmenu ul').show();
+          });
+        }
+      });
+
+      function isMobile() {
+        var userAgentInfo = navigator.userAgent;
+
+        var mobileAgents = [
+          'Android',
+          'iPhone',
+          'SymbianOS',
+          'Windows Phone',
+          'iPad',
+          'iPod',
+        ];
+
+        var mobile_flag = false;
+
+        for (var v = 0; v < mobileAgents.length; v++) {
+          if (userAgentInfo.indexOf(mobileAgents[v]) > 0) {
+            mobile_flag = true;
+            break;
+          }
+        }
+        var screen_width = window.screen.width;
+        var screen_height = window.screen.height;
+
+        if (screen_width < 500 && screen_height < 800) {
+          mobile_flag = true;
+        }
+
+        return mobile_flag;
+      }
+    </script>
+  </body>
+  <script src="script.js"></script>
 </html>
-
