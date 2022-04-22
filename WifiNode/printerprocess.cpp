@@ -2,7 +2,7 @@
 #include "nodeconfig.h"
 #include "soc/rtc_wdt.h"
 
-extern void cancleOrFinishPrint();
+extern void cancelOrFinishPrint();
 void printLoop(void * parameter);
 
 
