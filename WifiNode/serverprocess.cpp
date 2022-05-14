@@ -9,7 +9,7 @@ void espReleaseSD();
 void reset559();
 void sendCmdByPackage(String cmd);
 void sendCmdByPackageNow(String cmd);
-void cancleOrFinishPrint();
+void cancelOrFinishPrint();
 
 
 extern void Write_String(int a,int b,String str);
@@ -391,10 +391,10 @@ void resetUSBHost(AsyncWebServerRequest *request)
   request->send(200, "text/plain","ok");
 }
 
-void cancleOrFinishPrint()
+void cancelOrFinishPrint()
 {
     String finish_cmd = cf_node_name+":Finish";
-    g_status = CANCLE;
+    g_status = CANCEL;
     g_status = P_IDEL;
     recv_ok = false;
     recvl_ok = false;
@@ -444,9 +444,9 @@ void printerControl(AsyncWebServerRequest *request)
             sendCmdByPackage("M0\n");
 
           }
-          else if(op=="CANCLE")
+          else if(op=="CANCEL")
           {
-            cancleOrFinishPrint();
+            cancelOrFinishPrint();
           }
           else if(op=="RECOVER")
           {

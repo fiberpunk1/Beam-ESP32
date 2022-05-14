@@ -2,7 +2,7 @@
 #include "nodeconfig.h"
 #include "soc/rtc_wdt.h"
 
-extern void cancleOrFinishPrint();
+extern void cancelOrFinishPrint();
 void printLoop(void * parameter);
 
 
@@ -82,12 +82,12 @@ void readPrinterBack()
         
         if(inData.indexOf("Finish")!=-1)
         {
-          cancleOrFinishPrint();
+          cancelOrFinishPrint();
           
         }
         else if(inData.indexOf("Done")!=-1)
         {
-          cancleOrFinishPrint();
+          cancelOrFinishPrint();
           
         }
         else if(inData.indexOf("resumed")!=-1)
@@ -97,7 +97,7 @@ void readPrinterBack()
         
         if(inData.indexOf("No media")!=-1)
         {
-          cancleOrFinishPrint();
+          cancelOrFinishPrint();
          
         }
         
