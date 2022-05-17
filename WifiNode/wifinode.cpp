@@ -7,6 +7,10 @@
 #include "rBase64.h"
 
 void Write_String(int a,int b,String str);
+String Read_String(int, int);
+String getValue(String data, char separator, int index);
+void saveCurrentPrintStatus(String status_str);
+uint8_t lastPowerOffPrinting();
 
 extern void hardwareReleaseSD();
 extern void espGetSDCard();
@@ -20,6 +24,43 @@ FiberPunk_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
 //wifi重连
 unsigned long previousMillis = 0;
 unsigned long interval = 30000;
+
+
+uint8_t lastPowerOffPrinting()
+{
+    String instore_sd_type = Read_String(EEPROM.read(21),180);
+    if(instore_sd_type.length()>0)
+    {
+      
+        if(instore_sd_type.indexOf("PRINTING")!=-1)
+        {
+            last_power_status = 1;
+            return 1;
+        }
+        else if(instore_sd_type.indexOf("NONE")!=-1)
+        {
+            last_power_status = 0;
+            return 0;
+        }
+        else
+        {
+            last_power_status = 0;
+            return 0;
+        }
+        
+    }
+    else
+    {
+        last_power_status = 0;
+        return 0;
+    }
+}
+
+void saveCurrentPrintStatus(String status_str)
+{
+    Write_String(21,180,status_str);
+    delay(100);
+}
 
 String readConfig(File& file)
 {
@@ -126,10 +167,12 @@ void WifiNode::checkwifi()
 void WifiNode::init()
 {
 	uint8_t pw_exist = 0;
+    
     String b_filament = "";
 	EEPROM.begin(256);
     //0.初始化串口和OLED屏
     PRINTER_PORT.begin(115200);
+    Serial2.begin(115200);
     PRINTER_PORT.setTimeout(120);
     PRINTER_PORT.setRxBufferSize(512);
     PRINTER_PORT.setDebugOutput(true);
@@ -138,7 +181,7 @@ void WifiNode::init()
         Serial.println("SPIFFS Mount Failed");
         return;
     }
-
+    last_power_status = lastPowerOffPrinting();
 
     //default to SDIO method
     String instore_sd_type = Read_String(EEPROM.read(17),150);
@@ -171,12 +214,19 @@ void WifiNode::init()
 
     //faliment detector
     pinMode(19, INPUT);
-
+    pinMode(18, OUTPUT);
 
     //SD switcher
-    pinMode(18, OUTPUT);
-    digitalWrite(18, LOW);//default beam
-
+    if(last_power_status)
+    {
+        digitalWrite(18, HIGH);//default to 3D printer
+    }
+    else
+    {
+        digitalWrite(18, LOW);
+    }
+    
+    
     pinMode(RED_LED, OUTPUT);
     pinMode(GREEN_LED, OUTPUT);
     pinMode(BLUE_LED, OUTPUT);
@@ -193,7 +243,10 @@ void WifiNode::init()
     
     display.setTextColor(SSD1306_WHITE);
     display.display();
-    delay(2000); // Pause for 2 seconds   
+    delay(2000); // Pause for 2 seconds  
+    String version = String(VERSION);
+    message_display(version); 
+    delay(2000); 
     message_display("Checking SD Card ...");
     delay(2000);
     //让打印机释放SD卡
@@ -204,64 +257,77 @@ void WifiNode::init()
     sendCmdByPackageNow("M22\n");
     delay(500);
     //1.初始化SD
-    if(printer_sd_type==0)
+    if(!last_power_status)
     {
-        SPI.begin(14,2,15,13);
-        int sd_get_count = 0;
-        while((!SD.begin(13,SPI,4000000,"/sd",5,false))&&(sd_get_count<5))
-        {
-            digitalWrite(RED_LED, LOW);
-            digitalWrite(GREEN_LED, HIGH);
-            digitalWrite(BLUE_LED, HIGH);
+        if(printer_sd_type==0)
+            {
+                SPI.begin(14,2,15,13);
+                int sd_get_count = 0;
+                while((!SD.begin(13,SPI,4000000,"/sd",5,false))&&(sd_get_count<5))
+                {
+                    digitalWrite(RED_LED, LOW);
+                    digitalWrite(GREEN_LED, HIGH);
+                    digitalWrite(BLUE_LED, HIGH);
 
-            // DBG_OUTPUT_PORT.println("Not Found SD Card.");
-            message_display("Not Found SD Card.");        
-            delay(500);
+                    // DBG_OUTPUT_PORT.println("Not Found SD Card.");
+                    message_display("Not Found SD Card.");        
+                    delay(500);
+                    digitalWrite(RED_LED, HIGH);
+                    digitalWrite(GREEN_LED, HIGH);
+                    digitalWrite(BLUE_LED, HIGH);  
+                    delay(500);
+                    sd_get_count++;
+            //        break;      
+                } 
+            }
+            else if(printer_sd_type==1)
+            {
+                int sd_get_count = 0;
+                while((!SD_MMC.begin())&&(sd_get_count<5))
+                {
+                    digitalWrite(RED_LED, LOW);
+                    digitalWrite(GREEN_LED, HIGH);
+                    digitalWrite(BLUE_LED, HIGH);
+
+                    message_display("Not Found SD Card.");        
+                    delay(500);
+                    digitalWrite(RED_LED, HIGH);
+                    digitalWrite(GREEN_LED, HIGH);
+                    digitalWrite(BLUE_LED, HIGH);  
+                    delay(500);
+                    sd_get_count++;
+                }     
+            }
+            
             digitalWrite(RED_LED, HIGH);
             digitalWrite(GREEN_LED, HIGH);
-            digitalWrite(BLUE_LED, HIGH);  
-            delay(500);
-            sd_get_count++;
-    //        break;      
-        } 
-    }
-    else if(printer_sd_type==1)
-    {
-        int sd_get_count = 0;
-        while((!SD_MMC.begin())&&(sd_get_count<5))
-        {
-            digitalWrite(RED_LED, LOW);
-            digitalWrite(GREEN_LED, HIGH);
             digitalWrite(BLUE_LED, HIGH);
-
-            message_display("Not Found SD Card.");        
-            delay(500);
-            digitalWrite(RED_LED, HIGH);
-            digitalWrite(GREEN_LED, HIGH);
-            digitalWrite(BLUE_LED, HIGH);  
-            delay(500);
-            sd_get_count++;
-        }     
+        
+            // DBG_OUTPUT_PORT.println("SD Card initialized.");
+            hasSD = true;
     }
+
     
-    digitalWrite(RED_LED, HIGH);
-    digitalWrite(GREEN_LED, HIGH);
-    digitalWrite(BLUE_LED, HIGH);
-   
-    // DBG_OUTPUT_PORT.println("SD Card initialized.");
-    hasSD = true;
    
     //2.初始化wifi
+    uint8_t wifi_count = 0;
     initwifi:
     message_display("Wait Connect WiFi..."); 
     delay(500);
     //读取wifi账号密码，还有打印机名字
     
     File config_file;
-    if(printer_sd_type==0)
-        config_file = SD.open("/config.txt",FILE_READ);
-    else if(printer_sd_type==1)
-        config_file = SD_MMC.open("/config.txt",FILE_READ);
+    //如果上一次断电，不是打印状态
+    if(!last_power_status)
+    {
+        if(printer_sd_type==0)
+            config_file = SD.open("/config.txt",FILE_READ);
+        else if(printer_sd_type==1)
+            config_file = SD_MMC.open("/config.txt",FILE_READ);
+
+        pw_exist = 0;
+    }
+
     
 
     if(config_file)
@@ -345,6 +411,7 @@ void WifiNode::init()
 
     WiFi.begin((const char*)cf_ssid.c_str(), (const char*)cf_password.c_str());
 
+    
     // if(MDNS.begin(cf_node_name.c_str()))
     // {
     //     MDNS.addService("http", "tcp", 88);
@@ -368,15 +435,27 @@ void WifiNode::init()
         // DBG_OUTPUT_PORT.println(cf_ssid.c_str());
         // DBG_OUTPUT_PORT.println(cf_password.c_str());
          message_display("Connect WiFi Wrong.");
-        delay(2000);
-        goto initwifi;
+        delay(500);
+        if(wifi_count<4)
+        {
+            wifi_count++;
+            goto initwifi;  
+        }
+        // goto initwifi;
     }
     // DBG_OUTPUT_PORT.print("Connected! IP address: ");
     // DBG_OUTPUT_PORT.println(WiFi.localIP());
     digitalWrite(RED_LED, HIGH);
     digitalWrite(GREEN_LED, LOW);
     digitalWrite(BLUE_LED, HIGH);
-    page_display("Wifi Ready!");
+    if(wifi_count<=3)
+    {
+        page_display("Wifi Ready!");  
+    }
+    else
+    {
+        page_display("Wifi Error!");
+    }
     //3. server init
     serverprocesser.serverInit();
 
@@ -395,6 +474,14 @@ void WifiNode::process()
 {
     serverprocesser.serverLoop();
     checkwifi();
+    if(reset_sd_559)
+    {
+        reset559();
+        espReleaseSD();
+        delay(50);
+        espGetSDCard();
+        reset_sd_559 = 0;
+    }
     if(pre_usb_status!=current_usb_status)
     {
         if(current_usb_status)//connected

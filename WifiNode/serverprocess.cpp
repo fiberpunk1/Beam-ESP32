@@ -9,7 +9,9 @@ void espReleaseSD();
 void reset559();
 void sendCmdByPackage(String cmd);
 void sendCmdByPackageNow(String cmd);
-void cancelOrFinishPrint();
+void cancleOrFinishPrint();
+
+//#define NEPTUNE 1
 
 
 extern void Write_String(int a,int b,String str);
@@ -143,8 +145,6 @@ void deleteRecursive(String path)
       SD_MMC.remove((char *)path.c_str());
     }
   }
- 
-  
 }
 
 void handlerRemove(AsyncWebServerRequest *request) {
@@ -194,6 +194,7 @@ void printDirectory(AsyncWebServerRequest * request) {
   int params = request->params();
   if (params == 0) {
     request->send(500, "text/plain","BAD ARGS");
+    return;
   }
   AsyncWebParameter* p = request->getParam(0);
   String path = p->value();
@@ -202,6 +203,7 @@ void printDirectory(AsyncWebServerRequest * request) {
   {
     if (path != "/" && !SD.exists((char *)path.c_str())) {
       request->send(500, "text/plain","BAD PATH");
+      return;
     }
 
     writeLog(cf_node_name+"SD Type: SPI");
@@ -210,6 +212,7 @@ void printDirectory(AsyncWebServerRequest * request) {
     if (!dir.isDirectory()) {
       dir.close();
       request->send(500, "text/plain", "NOT DIR");
+      return;
     }
     dir.rewindDirectory();
     
@@ -234,18 +237,21 @@ void printDirectory(AsyncWebServerRequest * request) {
     output += "]";
     request->send(200, "text/json", output);
     dir.close();
+    return;
   }
   else if(printer_sd_type==1)
   {
     writeLog(cf_node_name+"SD Type: SDIO");
     if (path != "/" && !SD_MMC.exists((char *)path.c_str())) {
       request->send(500, "text/plain","BAD PATH");
+      return;
     }
     File dir = SD_MMC.open((char *)path.c_str());
        path = String();
     if (!dir.isDirectory()) {
       dir.close();
       request->send(500, "text/plain", "NOT DIR");
+      return;
     }
     dir.rewindDirectory();
     
@@ -333,7 +339,15 @@ void sendCmdByPackage(String cmd)
 }
 
 void handleNotFound(AsyncWebServerRequest *request) {
-  if (hasSD && loadFromSdCard(request->url(), request)) {
+  if (loadFromSdCard(request->url(), request)) {
+      if(!last_power_status)
+      {
+        reset_sd_559 = 1;
+      }
+      else
+      {
+        rst_usb = true;
+      }
     return;
   }
   String message = "SDCARD Not Detected\n\n";
@@ -350,10 +364,18 @@ void handleNotFound(AsyncWebServerRequest *request) {
 void reportDevice(AsyncWebServerRequest *request)
 {
   String ip = "Beam:"+cf_node_name + ":" + WiFi.localIP().toString();
-   if(g_status==PRINTING)
+  if(g_status==PRINTING)
   {
     ip = ip + ":" + "PRINTING";
   }
+//  if(!last_power_status)
+//  {
+//    reset_sd_559 = 1;
+//  }
+//  else
+//  {
+//    rst_usb = true;
+//  }
   request->send(200, "text/plain",ip);
 }
 void reportVersion(AsyncWebServerRequest *request)
@@ -385,25 +407,38 @@ void reset559()
 }
 
 
+
 void resetUSBHost(AsyncWebServerRequest *request)
 {
   reset559();
   request->send(200, "text/plain","ok");
 }
 
-void cancelOrFinishPrint()
+void cancleOrFinishPrint()
 {
+    saveCurrentPrintStatus("NONE");
+    last_power_status = 0;
     String finish_cmd = cf_node_name+":Finish";
-    g_status = CANCEL;
+
     g_status = P_IDEL;
     recv_ok = false;
     recvl_ok = false;
+
     sendCmdByPackage("M524\n");
+    delay(50);
+    sendCmdByPackage("M84\n");
+#ifdef NEPTUNE
+    delay(50);
+    sendCmdByPackage("M25\n");
+    delay(50);
+    reset_sd_559 = 1;
+#endif
     current_bed_temp = "";
     current_layers = "";
     current_temp = "";
     espGetSDCard();
     sendHttpMsg(finish_cmd);
+    
     // if(socket_client.connected())
     //   socket_client.stop();
 }
@@ -441,12 +476,15 @@ void printerControl(AsyncWebServerRequest *request)
           if(op=="PAUSE")
           {
             g_status = PAUSE;
+            #ifdef NEPTUNE
+              sendCmdByPackage("M25\n");
+            #endif
             sendCmdByPackage("M0\n");
 
           }
-          else if(op=="CANCEL")
+          else if(op=="CANCLE")
           {
-            cancelOrFinishPrint();
+            cancleOrFinishPrint();
           }
           else if(op=="RECOVER")
           {
@@ -455,6 +493,9 @@ void printerControl(AsyncWebServerRequest *request)
               g_status = PRINTING;
               // PRINTER_PORT.print("G4 S1.0\n");
               sendCmdByPackage("M108\n");
+            #ifdef NEPTUNE
+              sendCmdByPackage("M24\n");
+            #endif
             }
 
           }
@@ -489,19 +530,35 @@ void getPCAddress(AsyncWebServerRequest *request)
     }
     else
     {
-     AsyncWebParameter* p = request->getParam(0);
-    pc_ipaddress = p->value();
-    if (!socket_client.connect(pc_ipaddress.c_str(), 1688)) 
-    {
-        request->send(500, "text/plain", "Connect PC failed!");
-    }
-    else
-    { 
-      request->send(200, "text/plain", "ok");
-    } 
+      AsyncWebParameter* p = request->getParam(0);
+      pc_ipaddress = p->value();
+      if (!socket_client.connected()) 
+      {
+         if(socket_client.connect(pc_ipaddress.c_str(), 1688))
+         {
+          request->send(200, "text/plain", "ok");
+         }
+         else
+        { 
+          request->send(500, "text/plain", "Connect PC failed!");
+        } 
+         
+      }
+      else
+      {
+        request->send(200, "text/plain", "ok");
+       }
+
     }
 }
 
+void getRSSI(AsyncWebServerRequest *request)
+{
+  int rssi =  0;
+  rssi = WiFi.RSSI();
+  String rssi_str = "RSSI:"+String(rssi);
+  request->send(200, "text/plain", rssi_str);
+}
 
 void sendGcode(AsyncWebServerRequest *request)
 {
@@ -515,6 +572,7 @@ void sendGcode(AsyncWebServerRequest *request)
     {
         AsyncWebParameter* p = request->getParam(0);
         String op = p->value()+"\n";
+        
         if(op.startsWith("G0"))
         {
           sendCmdByPackage("G91\n");
@@ -545,37 +603,52 @@ void sendGcode(AsyncWebServerRequest *request)
 
 void printStart(AsyncWebServerRequest * request)
 {
-  if(current_usb_status){
-    if (!request->hasArg("filename")) {
+ if(current_usb_status)
+ {
+    if (!request->hasArg("filename")) 
+    {
       request->send(500, "text/plain", "NO FILE");
     }
-    else{
-        reset559();
-        delay(50);
-        espReleaseSD();
-        delay(50);
+    else
+    {
         AsyncWebParameter* p = request->getParam(0);
         String path = p->value();
-        if(g_status==P_IDEL){
-          String print_cmd = "M23 "+path+"\n";
-          sendCmdByPackage(print_cmd);
-          delay(50);
-          sendCmdByPackage("M24\n");
-          g_status = PRINTING;
-          request->send(200, "text/plain", "ok"); 
-
+        path.toLowerCase();
+        current_file = path;
+        if(g_status==P_IDEL)
+        {
+           print_start_flag = 1;
+           request->send(200, "text/plain", "ok"); 
         }
-        else{
+        else
+        {
           request->send(500, "text/plain", "PRINTER BUSY"); 
         }
          
     }
     
   }
-  else{
+  else
+  {
     request->send(500, "text/plain", "NO PRINTER");
   }
   
+}
+
+void printStartInstance()
+{
+  reset559();
+  delay(250);
+  espReleaseSD();
+  delay(200); 
+  String print_cmd = "M23 "+current_file+"\n";
+  sendCmdByPackage(print_cmd);
+  delay(200);
+  sendCmdByPackage("M24\n");
+  g_status = PRINTING;
+  saveCurrentPrintStatus("PRINTING");
+  last_power_status = 1;
+
 }
 
 void espRestart(AsyncWebServerRequest *request)
@@ -611,6 +684,7 @@ void ServerProcess::serverInit()
     server.on("/version", HTTP_GET, reportVersion);
     server.on("/gcode", HTTP_GET, sendGcode);
     server.on("/pcsocket", HTTP_GET, getPCAddress);
+    server.on("/getrssi",HTTP_GET,getRSSI);
     server.on("/resetusb",HTTP_GET,resetUSBHost);
     server.on("/esprestart", HTTP_GET, espRestart);
     server.on("/setsdtype", HTTP_GET, setSDType);
@@ -763,7 +837,16 @@ void filamentDetect()
 void ServerProcess::serverLoop()
 {
 //    server.handleClient();
-
+    if(rst_usb == true)
+    {
+        reset559();
+        rst_usb = false;
+    }
+    if(print_start_flag)
+    {
+      print_start_flag = 0;
+      printStartInstance();
+    }
     if (g_status==PRINTING)
     {
       digitalWrite(RED_LED, HIGH);
@@ -776,11 +859,7 @@ void ServerProcess::serverLoop()
       digitalWrite(RED_LED, HIGH);
       digitalWrite(GREEN_LED, LOW);
       digitalWrite(BLUE_LED, HIGH);
-      if (rst_usb == true)
-      {
-          reset559();
-          rst_usb = false;
-      }
+
     }
     if(paused_for_user&&(!paused_for_filament))
     {

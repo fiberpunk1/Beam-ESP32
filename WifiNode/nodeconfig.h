@@ -21,7 +21,7 @@
 #include "crc8.h"
 #include "FiberPunk_SSD1306.h"
 
-#define VERSION "2022-3-27-2002"
+#define VERSION "2022-5-9-2004"
 #define DBG_OUTPUT_PORT Serial
 #define PRINTER_PORT Serial
 #define RED_LED 26
@@ -40,8 +40,8 @@ enum OP_STATUS
   PRINTING=1,
   PAUSE=2,
   RECOVER=3,
-  CANCEL=4,
-  HEATING=5,
+  CANCLE=4,
+  HEEATING=5,
 };
 
 enum ERROR_CODE
@@ -53,7 +53,7 @@ enum ERROR_CODE
 extern AsyncWebServer server;
 extern AsyncEventSource events;
 // extern HTTPClient http_client;
-extern WiFiClient socket_client;
+extern AsyncClient socket_client;
 extern CRC8 gcrc;
 
 extern File uploadFile;
@@ -67,7 +67,7 @@ extern String current_layers;
 extern String current_temp;
 extern String current_bed_temp;
 extern String pc_ipaddress;
-
+extern String current_file;
 extern OP_STATUS g_status;
 extern ERROR_CODE g_error;
 
@@ -83,14 +83,21 @@ extern bool paused_for_user;
 extern bool paused_for_filament;
 
 extern uint8_t printer_sd_type;
+extern uint8_t last_power_status;
 extern uint8_t cmd_length;
+extern uint8_t reset_sd_559;
+extern uint8_t print_start_flag;
 
 extern unsigned char current_usb_status;
 extern unsigned char pre_usb_status;
 
-
+extern void sendCaptureImage(String);
 extern void sendHttpMsg(String);
 extern void writeLog(String);
+extern void saveCurrentPrintStatus(String status_str);
+extern String getValue(String data, char separator, int index);
+extern void Write_String(int a,int b,String str);
+extern uint8_t lastPowerOffPrinting();
 class NodeConfig
 {
 public:
