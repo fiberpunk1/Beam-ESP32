@@ -426,18 +426,20 @@ void cancleOrFinishPrint()
 
     sendCmdByPackage("M524\n");
     delay(50);
-    sendCmdByPackage("M84\n");
+    sendCmdByPackage("M118 @Stop\n");
+
 #ifdef NEPTUNE
     delay(50);
     sendCmdByPackage("M25\n");
     delay(50);
     reset_sd_559 = 1;
+    
 #endif
+    // espGetSDCard();
+    sendHttpMsg(finish_cmd);
     current_bed_temp = "";
     current_layers = "";
     current_temp = "";
-    espGetSDCard();
-    sendHttpMsg(finish_cmd);
     
     // if(socket_client.connected())
     //   socket_client.stop();
@@ -471,7 +473,7 @@ void printerControl(AsyncWebServerRequest *request)
       AsyncWebParameter* p = request->getParam(0);
       String op = p->value();
 
-      if(current_usb_status)
+      // if(current_usb_status)
       {
           if(op=="PAUSE")
           {
@@ -509,10 +511,10 @@ void printerControl(AsyncWebServerRequest *request)
           }
           request->send(200, "text/plain","ok");
       }
-      else
-      {
-        request->send(500, "text/plain","NO PRINTER");
-      }
+      // else
+      // {
+      //   request->send(500, "text/plain","NO PRINTER");
+      // }
   }
   
   
@@ -762,7 +764,7 @@ void espReleaseSD()
 void espGetSDCard()
 {
     //0. release sd from marlin
-    sendCmdByPackage("M22\n");
+    sendCmdByPackageNow("M22\n");
     delay(50);
     digitalWrite(18, LOW); 
     delay(50);
@@ -770,8 +772,7 @@ void espGetSDCard()
     writeLog(cf_node_name+"SD Type:"+String(printer_sd_type));
 
     if(printer_sd_type==0)
-    {
-        
+    {   
         SPI.begin(14,2,15,13);
         int sd_get_count = 0;
         while((!SD.begin(13,SPI,4000000,"/sd",5,false))&&(sd_get_count<5))

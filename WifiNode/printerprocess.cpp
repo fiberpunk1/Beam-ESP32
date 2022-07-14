@@ -3,6 +3,7 @@
 #include "soc/rtc_wdt.h"
 
 extern void cancleOrFinishPrint();
+extern void espGetSDCard();
 void printLoop(void * parameter);
 
 
@@ -104,6 +105,12 @@ void readPrinterBack()
         current_usb_status = 0;
       }
 
+      if(inData.indexOf("@Stop")!=-1)
+      {
+          espGetSDCard();
+          reset_sd_559 = 1;
+      }
+
       if(g_status==PRINTING)
       {
         if(inData.indexOf("paused for")!=-1)
@@ -143,11 +150,11 @@ void readPrinterBack()
          
         }
 
-        if(inData.indexOf("no file")!=-1)
-        {
-            cancleOrFinishPrint();
-            print_start_flag = 1;
-        }
+        // if(inData.indexOf("no file")!=-1)
+        // {
+        //     cancleOrFinishPrint();
+        //     print_start_flag = 1;
+        // }
 
         //Current file: (no file)
 

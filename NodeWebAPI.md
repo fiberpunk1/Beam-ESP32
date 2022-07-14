@@ -132,7 +132,7 @@ This document is used to describe the API design of the Node module.
 
 ---
 
-### 5. Send PC address to Node, create socket and connect to BeamNexcus
+### 5. Send PC address to Node, create socket and connect to Nexcus
 
 **Brief description**
 
@@ -314,6 +314,7 @@ B: 23.4 /40  T: 100.3/210
 **Return Example**
 - Execution complete, return ok
 
+
 ### 12. Get Node's firmware version information
 
 **Brief description**
@@ -331,3 +332,22 @@ B: 23.4 /40  T: 100.3/210
 
 **Return Example**
 - Execution complete, return version information
+
+
+### 13. Get Node's wifi signal strength
+
+**Brief description**
+
+- This API user gets the rssi of the Node.
+
+**Request URL**
+- ` http://192.168.1.133:88/getrssi`
+
+**Request Method**
+- GET
+
+**Parameters**
+- None
+
+**Return Example**
+- RSSI value
