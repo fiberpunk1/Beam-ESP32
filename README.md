@@ -25,7 +25,7 @@
 Node is an easy and affordable way to control and monitor 3D printers via WiFi, USB-enabled serial, and SD I/O. Node is very robust and power-efficient as it runs on an MCU (ESP32) while still offering a wide range of functionalities.
 
 **Key features:**
-- East to install - Node can be installed by plugging into a printer’s USB-enabled serial connection and data cable to SD card slow. This means no opening up the printer and complicated wiring.
+- Easy to install - Node can be installed by plugging into a printer’s USB-enabled serial connection and data cable to SD card slow. This means no opening up the printer and complicated wiring.
 - Easy to set up - Node can be set up to connect user network by simply running the desktop application or use web page, entering network credentials, and exporting the setting to sd card. 
 - Node has good compatibility with printers due to Node only relying on serial connection for control and monitor and utilizing the high bandwidth SD I/O for transfer.
 Faster and more reliable printing via Node's unique SD Card I/O bridge to printer
