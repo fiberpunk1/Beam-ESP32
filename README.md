@@ -78,7 +78,9 @@ To meet the above goals, we needed a tightly integrated solution that requires h
 
 Node provides core APIs to enable more platforms(Such as [Octoprint](https://github.com/OctoPrint/OctoPrint),Nexus, or postman tools) to access him for control. Listed below are the APIs already included in Node and their specific usage.[API docs](./NodeWebAPI.md)
 
-## 4.How to update  firmware
+## 4.How to compile and update firmware
+
+Please refer this [guide](https://docs.google.com/document/d/1nrXws8Kn6kyR-FUqMdOn-QdA-vBN1T6YTApFDrN4fQs/edit?usp=sharing) to compile your own firmwre.
 
 Please refer to this [guide](https://docs.google.com/presentation/d/1EhdrxVowPHj--iUrkvdkC4d59uzsc6_Up4gLxd3CpAw/edit?usp=sharing) to complete the firmware burning and updating. 
 
