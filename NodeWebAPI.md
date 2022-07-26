@@ -132,7 +132,7 @@ This document is used to describe the API design of the Node module.
 
 ---
 
-### 5. Send PC address to Node, create socket and connect to Nexcus
+### 5. Send PC address to Node, create socket and connect to Nexus
 
 **Brief description**
 
