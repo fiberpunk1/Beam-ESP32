@@ -46,7 +46,7 @@ Faster and more reliable printing via Node's unique SD Card I/O bridge to printe
 **Node's lite web UI:**
 
 <div align=center>
-<img src="./Images/NodeWebUI.jpg" width=800 />
+<img src="./Images/NodeWebUINew.png" width=800 />
 </div>
 
 **Node installed in Ender3-v2:**

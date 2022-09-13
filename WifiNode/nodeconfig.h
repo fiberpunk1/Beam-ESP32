@@ -21,7 +21,7 @@
 #include "crc8.h"
 #include "FiberPunk_SSD1306.h"
 
-#define VERSION "2022-6-8-2005"
+#define VERSION "2022-9-12-2006-Beta"
 #define DBG_OUTPUT_PORT Serial
 #define PRINTER_PORT Serial
 #define RED_LED 26
@@ -70,6 +70,15 @@ extern String pc_ipaddress;
 extern String current_file;
 extern OP_STATUS g_status;
 extern ERROR_CODE g_error;
+
+extern String user1_cmd_f_name;
+extern String user2_cmd_f_name;
+extern String user3_cmd_f_name;
+extern String user4_cmd_f_name;
+extern String user1_cmd;
+extern String user2_cmd;
+extern String user3_cmd;
+extern String user4_cmd;
 
 extern bool time_out;
 

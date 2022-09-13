@@ -37,6 +37,15 @@ void setWifiConfigByPort(String config_str)
     delay(100);
     Serial.print("SAVE");
   }
+  else if(cmd_name=="IPADDRESS")
+  {
+    if ((WiFi.status() == WL_CONNECTED)) 
+    {
+      Serial.print("&&"); 
+      Serial.print(WiFi.localIP()); 
+      Serial.println("##"); 
+    }
+  }
   else
   {
     Serial.print("ERROR");

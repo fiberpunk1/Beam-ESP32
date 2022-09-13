@@ -21,6 +21,16 @@ String current_bed_temp = "";
 String pc_ipaddress = "";
 String current_file="";
 
+String user1_cmd_f_name = "user1";
+String user2_cmd_f_name = "user2";
+String user3_cmd_f_name = "user3";
+String user4_cmd_f_name = "user4";
+String user1_cmd = "";
+String user2_cmd = "";
+String user3_cmd = "";
+String user4_cmd = "";
+
+
 OP_STATUS g_status=P_IDEL;
 ERROR_CODE g_error=NORMAL;
 

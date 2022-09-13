@@ -13,6 +13,7 @@ void saveCurrentPrintStatus(String status_str);
 uint8_t lastPowerOffPrinting();
 
 extern void hardwareReleaseSD();
+extern void getFMDfile();
 extern void espGetSDCard();
 extern void espReleaseSD();
 extern void reset559();
@@ -461,8 +462,10 @@ void WifiNode::init()
 
     //4. crc init
     gcrc.begin();
+    getFMDfile();
     delay(500);
     reset559();
+    PRINTER_PORT.flush();
     // camera_trigger();
     
    // hardwareReleaseSD();
@@ -491,6 +494,7 @@ void WifiNode::process()
         else
         {
             String pub_msg = "offline";
+            espReleaseSD();
             page_display("Printer Not Connect!");
             writeLog(cf_node_name+":offline");
             events.send(pub_msg.c_str(), "gcode_cli");
