@@ -37,11 +37,7 @@ Faster and more reliable printing via Node's unique SD Card I/O bridge to printe
 - Provide simple RestfulAPI to allow other software control (such as postman debugging tools)
 - Node includes extended interfaces (IIC, UART, SLR control circuit) to work with ESP32-Camera. This allows for time-lapse photography production, taking photos according to the progress and email reminders, PC local printing failure detection, and smoke flame detection, all of which do not rely on registered accounts and networks.
 
-**Nexus's local printing failure detection:**
 
-<div align=center>
-<img src="./Images/1-3-1.jpg" width=800 />
-</div>
 
 **Node's lite web UI:**
 
