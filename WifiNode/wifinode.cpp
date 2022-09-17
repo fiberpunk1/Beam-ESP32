@@ -16,7 +16,7 @@ extern void hardwareReleaseSD();
 extern void getFMDfile();
 extern void espGetSDCard();
 extern void espReleaseSD();
-extern void reset559();
+extern void resetUsbHostInstance();
 extern void sendCmdByPackage(String cmd);
 extern void sendCmdByPackageNow(String cmd);
 
@@ -251,7 +251,7 @@ void WifiNode::init()
     message_display("Checking SD Card ...");
     delay(2000);
     //让打印机释放SD卡
-    reset559();
+    resetUsbHostInstance();
     delay(1000);
 //    sendCmdByPackageNow("G28\n");
 //    delay(1000);
@@ -464,7 +464,7 @@ void WifiNode::init()
     gcrc.begin();
     getFMDfile();
     delay(500);
-    reset559();
+    resetUsbHostInstance();
     PRINTER_PORT.flush();
     // camera_trigger();
     
@@ -477,13 +477,13 @@ void WifiNode::process()
 {
     serverprocesser.serverLoop();
     checkwifi();
-    if(reset_sd_559)
+    if(reset_sd_usb)
     {
-        reset559();
+        resetUsbHostInstance();
         espReleaseSD();
         delay(50);
         espGetSDCard();
-        reset_sd_559 = 0;
+        reset_sd_usb = 0;
     }
     if(pre_usb_status!=current_usb_status)
     {

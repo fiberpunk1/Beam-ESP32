@@ -117,7 +117,7 @@ void readPrinterBack()
       if(inData.indexOf("@Stop")!=-1)
       {
           espGetSDCard();
-          reset_sd_559 = 1;
+          reset_sd_usb = 1;
       }
 
       if(g_status==PRINTING)

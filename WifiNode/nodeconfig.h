@@ -94,7 +94,7 @@ extern bool paused_for_filament;
 extern uint8_t printer_sd_type;
 extern uint8_t last_power_status;
 extern uint8_t cmd_length;
-extern uint8_t reset_sd_559;
+extern uint8_t reset_sd_usb;
 extern uint8_t print_start_flag;
 
 extern unsigned char current_usb_status;

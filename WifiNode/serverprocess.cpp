@@ -6,7 +6,7 @@ const char* host = "EdgeeWifi";
 void hardwareReleaseSD();
 void espGetSDCard();
 void espReleaseSD();
-void reset559();
+void resetUsbHostInstance();
 void sendCmdByPackage(String cmd);
 void sendCmdByPackageNow(String cmd);
 void cancleOrFinishPrint();
@@ -561,7 +561,7 @@ void handleNotFound(AsyncWebServerRequest *request) {
   if (loadFromSdCard(request->url(), request)) {
       if(!last_power_status)
       {
-        reset_sd_559 = 1;
+        reset_sd_usb = 1;
       }
       else
       {
@@ -589,7 +589,7 @@ void reportDevice(AsyncWebServerRequest *request)
   }
 //  if(!last_power_status)
 //  {
-//    reset_sd_559 = 1;
+//    reset_sd_usb = 1;
 //  }
 //  else
 //  {
@@ -616,7 +616,7 @@ void printerStatus(AsyncWebServerRequest *request)
   request->send(200, "text/plain",result);
 }
 
-void reset559()
+void resetUsbHostInstance()
 {
   digitalWrite(5, LOW);
   delay(50);
@@ -629,7 +629,7 @@ void reset559()
 
 void resetUSBHost(AsyncWebServerRequest *request)
 {
-  reset559();
+  resetUsbHostInstance();
   request->send(200, "text/plain","ok");
 }
 
@@ -651,7 +651,7 @@ void cancleOrFinishPrint()
     delay(50);
     sendCmdByPackage("M25\n");
     delay(50);
-    reset_sd_559 = 1;
+    reset_sd_usb = 1;
     
 #endif
     // espGetSDCard();
@@ -866,7 +866,7 @@ void printStart(AsyncWebServerRequest * request)
 
 void printStartInstance()
 {
-  reset559();
+  resetUsbHostInstance();
   delay(250);
   espReleaseSD();
   delay(200); 
@@ -1074,7 +1074,7 @@ void ServerProcess::serverLoop()
 //    server.handleClient();
     if(rst_usb == true)
     {
-        reset559();
+        resetUsbHostInstance();
         rst_usb = false;
     }
     if(print_start_flag)

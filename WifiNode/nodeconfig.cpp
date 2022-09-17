@@ -47,7 +47,7 @@ uint8_t printer_sd_type = 0;
 //last power status 0==idle  1==printing
 uint8_t last_power_status = 0;
 uint8_t print_start_flag = 0;
-uint8_t reset_sd_559 = 0;
+uint8_t reset_sd_usb = 0;
 unsigned char current_usb_status = 0;
 unsigned char pre_usb_status = 0;
 
