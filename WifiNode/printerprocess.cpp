@@ -5,6 +5,51 @@
 extern void cancleOrFinishPrint();
 void printLoop(void * parameter);
 
+void setWifiConfigByPort(String config_str)
+{
+  String cmd_str = config_str.substring(2);
+  String cmd_name = getValue(cmd_str, ':', 0);
+  String cmd_value = getValue(cmd_str, ':', 1);
+  if(cmd_name=="SSID")
+  {
+    cf_ssid = cmd_value.substring(0,cmd_value.length()-1);
+    Serial.print("SSID");
+  }
+  else if(cmd_name=="PASS")
+  {
+    cf_password = cmd_value.substring(0,cmd_value.length()-1);
+    Serial.print("PASS");
+  }
+  else if(cmd_name=="NAME")
+  {
+    cf_node_name = cmd_value.substring(0,cmd_value.length()-1);
+    Serial.print("NAME");
+  }
+  else if(cmd_name=="IPADDRESS")
+  {
+    if ((WiFi.status() == WL_CONNECTED)) 
+    {
+      Serial.print("&&"); 
+      Serial.print(WiFi.localIP()); 
+      Serial.println("##"); 
+    }
+  }
+  else if(cmd_name=="SAVE")
+  {
+    Write_String(1,30,cf_ssid);
+    delay(100);
+    Write_String(5,60,cf_password);
+    delay(100);
+    Write_String(9,90,cf_node_name);
+    delay(100);
+    Serial.print("SAVE");
+  }
+  else
+  {
+    Serial.print("ERROR");
+  }
+  
+}
 
 String inData="";//Gcode Command return value
 void readPrinterBack()
@@ -27,6 +72,11 @@ void readPrinterBack()
     {
       writeLog(cf_node_name+":"+inData);
       // writeLog(inData); 
+
+      if(inData.startsWith("&&"))
+      {
+        setWifiConfigByPort(inData);
+      }
       
       if(inData.indexOf("setusb")!=-1)
       {
@@ -60,7 +110,15 @@ void readPrinterBack()
       }
       else if(inData.indexOf("$f")!=-1)
       {
-        current_usb_status = 0;
+        if(g_status!=PRINTING)
+        {
+          current_usb_status = 0;
+        }
+//        else
+//        {
+//          print_start_flag = 1;
+//        }
+        
       }
 
       if(g_status==PRINTING)
@@ -74,10 +132,11 @@ void readPrinterBack()
         {
           current_layers = inData;
         } 
-        if(inData.indexOf("X:")!=-1)
+      if(inData.indexOf("@Capture")!=-1)
         {
-          String capture_cmd = "Camera-"+cf_node_name+"-TakeImg";
-          sendHttpMsg(capture_cmd);
+          String capture_cmd = cf_node_name+"@TakeImg";
+          Serial2.print("#%");
+          sendCaptureImage(capture_cmd);
         }
         
         if(inData.indexOf("Finish")!=-1)

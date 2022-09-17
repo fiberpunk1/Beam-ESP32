@@ -6,8 +6,6 @@
 #include "soc/rtc_wdt.h"
 #include "esp_task_wdt.h"
 
-
-
 WifiNode node;
 PrinterProcess printer;
 

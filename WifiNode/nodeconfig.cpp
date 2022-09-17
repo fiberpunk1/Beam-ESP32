@@ -4,7 +4,7 @@ AsyncWebServer server(88);
 AsyncEventSource events("/events");
 
 HTTPClient http_client;
-WiFiClient socket_client;
+AsyncClient  socket_client;
 CRC8 gcrc;
 
 File uploadFile;
@@ -21,6 +21,15 @@ String current_bed_temp = "";
 String pc_ipaddress = "";
 String current_file="";
 
+String user1_cmd_f_name = "user1";
+String user2_cmd_f_name = "user2";
+String user3_cmd_f_name = "user3";
+String user4_cmd_f_name = "user4";
+String user1_cmd = "";
+String user2_cmd = "";
+String user3_cmd = "";
+String user4_cmd = "";
+
 OP_STATUS g_status=P_IDEL;
 ERROR_CODE g_error=NORMAL;
 
@@ -34,6 +43,9 @@ bool paused_for_filament = false;
 
 //printer sd type: 0==spi  1==sdio
 uint8_t printer_sd_type = 0;
+uint8_t last_power_status = 0;
+uint8_t reset_sd_559 = 0;
+uint8_t print_start_flag = 0;
 unsigned char current_usb_status = 0;
 unsigned char pre_usb_status = 0;
 
@@ -41,7 +53,7 @@ unsigned char pre_usb_status = 0;
 
 uint8_t cmd_length=0;
 
-
+void sendCaptureImage(String);
 void sendHttpMsg(String);
 void writeLog(String);
 
@@ -53,10 +65,9 @@ void writeLog(String log_txt)
         sendHttpMsg(log_txt);
     }
 }
-
-void sendHttpMsg(String url)
+void sendCaptureImage(String url)
 {
-#if 0
+#if 1
     String http_url = "http://"+pc_ipaddress+":8002/"+"api/"+url;
     http_client.begin(http_url);
     int httpRsponCode = http_client.POST(http_url);
@@ -68,12 +79,13 @@ void sendHttpMsg(String url)
     else
     {
         //send failed
-        
     }
-#endif
+#endif 
+}
+void sendHttpMsg(String url)
+{
     if(socket_client.connected())
-        socket_client.print(url);
-    
+        socket_client.write(url.c_str());   
 }
 NodeConfig::NodeConfig()
 {

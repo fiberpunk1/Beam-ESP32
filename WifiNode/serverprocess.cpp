@@ -10,6 +10,7 @@ void reset559();
 void sendCmdByPackage(String cmd);
 void sendCmdByPackageNow(String cmd);
 void cancleOrFinishPrint();
+void getFMDfile();
 
 
 extern void Write_String(int a,int b,String str);
@@ -32,6 +33,8 @@ void eventHandle(AsyncEventSourceClient *client){
       Serial.printf("Client reconnected! Last message ID that it got is: %u\n", client->lastId());
     }
     client->send("hello! I get you data", NULL, millis(), 10000);
+    
+    
 }
 
 bool loadFromSdCard(String path, AsyncWebServerRequest *request) {
@@ -189,6 +192,223 @@ void handlerRemove(AsyncWebServerRequest *request) {
 }
 
 
+String readFMDfile(String file_name)
+{
+  String retmd = "";
+  if(file_name.startsWith("/fmd")&&(file_name.endsWith("txt")))
+  {
+    File fmd_file;
+    if(printer_sd_type==0)
+        fmd_file = SD.open(file_name,FILE_READ);
+    else if(printer_sd_type==1)
+        fmd_file = SD_MMC.open(file_name,FILE_READ);
+
+    while(fmd_file.available())
+    {
+      String ret = fmd_file.readStringUntil('\n');
+      ret.replace("\r", "");
+      retmd = retmd+ret+"#";
+    }
+    retmd=retmd+"G4 P50";
+  }
+  return retmd;
+  
+}
+
+void readAllFDMcmd()
+{
+  if(user1_cmd_f_name.length()>6)
+  {
+    user1_cmd = readFMDfile(user1_cmd_f_name);
+    writeLog(user1_cmd);
+  }
+
+  if(user2_cmd_f_name.length()>6)
+  {
+    user2_cmd = readFMDfile(user2_cmd_f_name);
+    writeLog(user2_cmd);
+  }
+
+  if(user3_cmd_f_name.length()>6)
+  {
+    user3_cmd = readFMDfile(user3_cmd_f_name);
+    writeLog(user3_cmd);
+  }
+
+  if(user4_cmd_f_name.length()>6)
+  {
+    user4_cmd = readFMDfile(user4_cmd_f_name);
+    writeLog(user4_cmd);
+  }
+}
+
+void getFMDfile()
+{
+  String path = "/";
+  if(printer_sd_type==0)
+  {
+    if (path != "/" && !SD.exists((char *)path.c_str())) {
+      return;
+    }
+
+    File dir = SD.open((char *)path.c_str());
+    path = String();
+    if (!dir.isDirectory()) {
+      dir.close();
+    }
+    dir.rewindDirectory();
+    
+    for (int cnt = 0; true; ++cnt) 
+    {
+      File entry = dir.openNextFile();
+      if (!entry) {
+        break;
+      }
+      if(!entry.isDirectory())
+      {
+        String fmd_name = entry.name();
+        Serial.println(fmd_name);
+        int fmd_name_len = fmd_name.length();
+        if(fmd_name.startsWith("/fmd")&&(fmd_name.endsWith("txt")))
+        {
+            String count = fmd_name.substring(fmd_name_len-5,fmd_name_len-4);
+            int c_count = count.toInt();
+            if(c_count==1)
+            {
+                user1_cmd_f_name = fmd_name;
+            }
+            else if(c_count==2)
+            {
+                user2_cmd_f_name = fmd_name;
+            }
+            else if(c_count==3)
+            {
+                user3_cmd_f_name = fmd_name;
+            }
+            else if(c_count==4)
+            {
+                user4_cmd_f_name = fmd_name;
+            }
+        }
+      }
+      
+      entry.close();
+    }
+    dir.close();
+  }
+  else if(printer_sd_type==1)
+  {
+    if (path != "/" && !SD_MMC.exists((char *)path.c_str())) {
+      return;
+    }
+
+    File dir = SD_MMC.open((char *)path.c_str());
+    path = String();
+    if (!dir.isDirectory()) {
+      dir.close();
+    }
+    dir.rewindDirectory();
+    
+    for (int cnt = 0; true; ++cnt) 
+    {
+      File entry = dir.openNextFile();
+      if (!entry) {
+        break;
+      }
+      if(!entry.isDirectory())
+      {
+        String fmd_name = entry.name();
+        int fmd_name_len = fmd_name.length();
+        if(fmd_name.startsWith("/fmd")&&(fmd_name.endsWith("txt")))
+        {
+            String count = fmd_name.substring(fmd_name_len-5,fmd_name_len-4);
+            int c_count = count.toInt();
+            if(c_count==1)
+            {
+                user1_cmd_f_name = fmd_name;
+            }
+            else if(c_count==2)
+            {
+                user2_cmd_f_name = fmd_name;
+            }
+            else if(c_count==3)
+            {
+                user3_cmd_f_name = fmd_name;
+            }
+            else if(c_count==4)
+            {
+                user4_cmd_f_name = fmd_name;
+            }
+        }
+      }
+      
+      entry.close();
+    }
+    dir.close();
+  }
+  readAllFDMcmd();
+
+}
+
+void getFMDBtnName(AsyncWebServerRequest * request)
+{
+  String fmd_btn = "##"+user1_cmd_f_name + ";" + user2_cmd_f_name + ";" + user3_cmd_f_name + ";" +user4_cmd_f_name + "&&";
+  events.send(fmd_btn.c_str(), "gcode_cli");
+  request->send(200, "text/plain", "ok");
+}
+void sendUserGcodeCmd(String usrgcodes)
+{
+    for(int i=0; i<8; i++)
+    {
+      String gcode_cmd = getValue(usrgcodes,'#',i);
+      if(gcode_cmd.length()<2){
+        break;
+      }
+      else{
+        writeLog("user:"+gcode_cmd);
+        sendCmdByPackage(gcode_cmd+"\n"); 
+        delay(100);
+      }
+    }
+}
+void user1Btn(AsyncWebServerRequest * request)
+{
+  if(user1_cmd_f_name.length()>6)
+  {
+    sendUserGcodeCmd(user1_cmd);
+  }
+  request->send(200, "text/plain", "ok");
+}
+
+void user2Btn(AsyncWebServerRequest * request)
+{
+  if(user2_cmd_f_name.length()>6)
+  {
+    sendUserGcodeCmd(user2_cmd);
+  }
+  request->send(200, "text/plain", "ok");
+}
+
+
+void user3Btn(AsyncWebServerRequest * request)
+{
+  if(user3_cmd_f_name.length()>6)
+  {
+    sendUserGcodeCmd(user3_cmd);
+  }
+  request->send(200, "text/plain", "ok");
+}
+
+
+void user4Btn(AsyncWebServerRequest * request)
+{
+  if(user4_cmd_f_name.length()>6)
+  {
+    sendUserGcodeCmd(user4_cmd);
+  }
+  request->send(200, "text/plain", "ok");
+}
+
 void printDirectory(AsyncWebServerRequest * request) {
 
   int params = request->params();
@@ -333,7 +553,15 @@ void sendCmdByPackage(String cmd)
 }
 
 void handleNotFound(AsyncWebServerRequest *request) {
-  if (hasSD && loadFromSdCard(request->url(), request)) {
+  if (loadFromSdCard(request->url(), request)) {
+    if(!last_power_status)
+    {
+      reset_sd_559 = 1;
+    }
+    else
+    {
+      rst_usb = true;
+    }
     return;
   }
   String message = "SDCARD Not Detected\n\n";
@@ -344,17 +572,29 @@ void handleNotFound(AsyncWebServerRequest *request) {
   message += "\nArguments: ";
   message += "\n";
   request->send(404, "text/plain", message);
+ 
   DBG_OUTPUT_PORT.print(message);
 }
 
 void reportDevice(AsyncWebServerRequest *request)
 {
   String ip = "Beam:"+cf_node_name + ":" + WiFi.localIP().toString();
-   if(g_status==PRINTING)
+  if(g_status==PRINTING)
   {
     ip = ip + ":" + "PRINTING";
   }
+  if(!last_power_status)
+  {
+    reset_sd_559 = 1;
+  }
+  else
+  {
+    rst_usb = true;
+  }
   request->send(200, "text/plain",ip);
+ 
+  
+  
 }
 void reportVersion(AsyncWebServerRequest *request)
 {
@@ -395,9 +635,11 @@ void resetUSBHost(AsyncWebServerRequest *request)
 
 void cancleOrFinishPrint()
 {
-    String finish_cmd = cf_node_name+":Finish";
-    g_status = CANCLE;
     g_status = P_IDEL;
+    saveCurrentPrintStatus("NONE");
+    last_power_status = 0;
+    String finish_cmd = cf_node_name+":Finish";
+    
     recv_ok = false;
     recvl_ok = false;
     sendCmdByPackage("M603\n");
@@ -406,6 +648,8 @@ void cancleOrFinishPrint()
     current_temp = "";
     espGetSDCard();
     sendHttpMsg(finish_cmd);
+    writeLog("print cancle or finis!");
+    
     // if(socket_client.connected())
     //   socket_client.stop();
 }
@@ -485,25 +729,41 @@ void printerControl(AsyncWebServerRequest *request)
 
 void getPCAddress(AsyncWebServerRequest *request)
 {
-    if (!request->hasArg("ip")) 
+       if (!request->hasArg("ip")) 
     {
         request->send(500, "text/plain", "BAD ARGS");
     }
     else
     {
-     AsyncWebParameter* p = request->getParam(0);
-    pc_ipaddress = p->value();
-    if (!socket_client.connect(pc_ipaddress.c_str(), 1688)) 
-    {
-        request->send(500, "text/plain", "Connect PC failed!");
-    }
-    else
-    { 
-      request->send(200, "text/plain", "ok");
-    } 
+      AsyncWebParameter* p = request->getParam(0);
+      pc_ipaddress = p->value();
+      if (!socket_client.connected()) 
+      {
+         if(socket_client.connect(pc_ipaddress.c_str(), 1688))
+         {
+          request->send(200, "text/plain", "ok");
+         }
+         else
+        { 
+          request->send(500, "text/plain", "Connect PC failed!");
+        } 
+         
+      }
+      else
+      {
+        request->send(200, "text/plain", "ok");
+       }
+
     }
 }
 
+void getRSSI(AsyncWebServerRequest *request)
+{
+  int rssi =  0;
+  rssi = WiFi.RSSI();
+  String rssi_str = "RSSI:"+String(rssi);
+  request->send(200, "text/plain", rssi_str);
+}
 
 void sendGcode(AsyncWebServerRequest *request)
 {
@@ -544,32 +804,40 @@ void sendGcode(AsyncWebServerRequest *request)
   }
    
 }
-
+void cleanEEPROM(AsyncWebServerRequest * request)
+{
+  String tmp=" ";
+  Write_String(1,30,tmp); 
+  delay(100);
+  Write_String(5,60,tmp);
+  delay(100);
+  Write_String(9,90,tmp);
+  delay(100);
+  Write_String(13,120,tmp);
+  delay(100);
+  Write_String(21,180,tmp);
+  request->send(200, "text/plain","ok");
+}
 void printStart(AsyncWebServerRequest * request)
 {
   if(current_usb_status){
     if (!request->hasArg("filename")) {
       request->send(500, "text/plain", "NO FILE");
     }
-    else{
-//        reset559();
-//        delay(50);
-        espReleaseSD();
-        delay(50);
+    else
+    {
+
         AsyncWebParameter* p = request->getParam(0);
         String path = p->value();
         path.toLowerCase();
         current_file = path;
-        if(g_status==P_IDEL){
-          String print_cmd = "M23 "+path+"\n";
-          sendCmdByPackage(print_cmd);
-          delay(50);
-          sendCmdByPackage("M24\n");
-          g_status = PRINTING;
-          request->send(200, "text/plain", "ok"); 
-
+        if(g_status==P_IDEL)
+        {
+          print_start_flag = 1;
+           request->send(200, "text/plain", "ok"); 
         }
-        else{
+        else
+        {
           request->send(500, "text/plain", "PRINTER BUSY"); 
         }
          
@@ -580,6 +848,78 @@ void printStart(AsyncWebServerRequest * request)
     request->send(500, "text/plain", "NO PRINTER");
   }
   
+}
+String savePaincFileName(String filename)
+{
+  int len = filename.length();
+  filename.toLowerCase();
+  String pure_name = filename.substring(1,len-4);
+  len = pure_name.length();
+  String cmd = "D3 Ax0f95 C"+String(len);
+  String filename_hex=" X";
+  for(int i=0; i<len; i++)
+  {
+    int tmp = pure_name[i];
+    String num(tmp, HEX);
+    
+    if(i==(len-1))
+    {
+      filename_hex = filename_hex + num;
+      if(len<8)
+        filename_hex = filename_hex + "00\n";
+      else
+        filename_hex = filename_hex + "\n";
+        
+    }
+    else
+    {
+      filename_hex = filename_hex + num + " ";   
+    }
+  }
+  cmd = cmd + filename_hex;
+  return cmd;
+}
+
+String dirDepth(int depth)
+{
+  String cmd = "D3 Ax3930 C1 X";
+  String depth_str(depth, HEX);
+  cmd = cmd + depth_str + "\n";
+  return cmd;
+}
+
+String dirsPath()
+{
+  String cmd = "D3 Ax3850 C1 X2f\n";
+  return cmd;
+}
+
+
+void printStartInstance()
+{
+  reset559();
+  delay(250);
+  espReleaseSD();
+  delay(200); 
+  String print_cmd = "M23 "+current_file+"\n";
+  sendCmdByPackage(print_cmd);
+  delay(200);
+  String save_panic_file = savePaincFileName(current_file);
+  sendCmdByPackage(save_panic_file);
+  writeLog("select file:"+current_file);
+  writeLog(save_panic_file);
+  delay(200);
+  sendCmdByPackage(dirDepth(1));
+  writeLog(dirDepth(1));
+  delay(200);
+  sendCmdByPackage(dirsPath());
+  writeLog(dirsPath());
+  delay(200);
+  sendCmdByPackage("M24\n");
+  g_status = PRINTING;
+  saveCurrentPrintStatus("PRINTING");
+  last_power_status = 1;
+
 }
 
 void espRestart(AsyncWebServerRequest *request)
@@ -615,9 +955,16 @@ void ServerProcess::serverInit()
     server.on("/version", HTTP_GET, reportVersion);
     server.on("/gcode", HTTP_GET, sendGcode);
     server.on("/pcsocket", HTTP_GET, getPCAddress);
+    server.on("/getrssi",HTTP_GET,getRSSI);
     server.on("/resetusb",HTTP_GET,resetUSBHost);
     server.on("/esprestart", HTTP_GET, espRestart);
     server.on("/setsdtype", HTTP_GET, setSDType);
+    server.on("/cleaneeprom", HTTP_GET, cleanEEPROM);
+    server.on("/getfmdname", HTTP_GET, getFMDBtnName);
+    server.on("/user1", HTTP_GET, user1Btn);
+    server.on("/user2", HTTP_GET, user2Btn);
+    server.on("/user3", HTTP_GET, user3Btn);
+    server.on("/user4", HTTP_GET, user4Btn);
 
     // server.on("/capture", HTTP_GET, testCaptureImage);
 
@@ -671,7 +1018,7 @@ void espReleaseSD()
    pinMode(13, INPUT_PULLUP);
    pinMode(14, INPUT_PULLUP);
    pinMode(15, INPUT_PULLUP);
-
+  writeLog("Umount SD card");
   if(printer_sd_type==0)
   {
     SD.end();  
@@ -680,12 +1027,12 @@ void espReleaseSD()
   {
     SD_MMC.end();
   }
-    digitalWrite(18, HIGH);  
-    delay(50);
-    
-    //2.send gcode to marlin, init and reload the sd card
-    sendCmdByPackage("M21\n");
-    delay(50);  
+  digitalWrite(18, HIGH);  
+  delay(50);
+  
+  //2.send gcode to marlin, init and reload the sd card
+  sendCmdByPackage("M21\n");
+  delay(50);  
     
 }
 
@@ -697,6 +1044,7 @@ void espGetSDCard()
     digitalWrite(18, LOW); 
     delay(50);
     //1.初始化SD
+    writeLog("Mount SD card");
     writeLog(cf_node_name+"SD Type:"+String(printer_sd_type));
 
     if(printer_sd_type==0)
@@ -772,6 +1120,12 @@ void ServerProcess::serverLoop()
         reset559();
         rst_usb = false;
     }
+    if(print_start_flag)
+    {
+      print_start_flag = 0;
+      printStartInstance();
+    }
+    
     if (g_status==PRINTING)
     {
       digitalWrite(RED_LED, HIGH);

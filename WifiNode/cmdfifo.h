@@ -3,7 +3,7 @@
 
 #include "Arduino.h"
 
-#define FIFO_SIZE 24
+#define FIFO_SIZE 1
 
 class CMDFIFO 
 {
