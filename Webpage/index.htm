@@ -10,6 +10,10 @@
 		<div class="logo1">
 			<div class="container-fluid">
 				<img src="logo_03.png">
+				<br>
+				<label>
+						<span>node-webpage-2022-9-12-1006.0</span>
+				</label>
 			</div>
 		</div>
 		<div class="container-fluid">
@@ -71,19 +75,19 @@
 								    <tbody>
 										<tr>
 								      <td class="active">
-								        <button class="btn btn-default btn-block" type="button" id="btn-pause">
+								        <button class="btn btn-default btn-block" title="Pause SD card print" type="button" id="btn-pause">
 								         Pause
 								        </button>
 								      </td>
 													
 								      <td class="active">
-								        <button class="btn btn-default btn-block" type="button" id="btn-cancel">
+								        <button class="btn btn-default btn-block" title="Cancel SD card print, printer will unmount SD card" type="button" id="btn-cancel">
 								          Cancel
 								        </button>
 								      </td>
 													
 								      <td class="active">
-								        <button class="btn btn-default btn-block" type="button" id="btn-restart">
+								        <button class="btn btn-default btn-block" title="Resume SD card print job" type="button" id="btn-restart">
 								          Resume
 								        </button>
 								      </td>
@@ -99,19 +103,19 @@
 											
 								    <tr>
 								      <td class="active">
-								        <button class="btn btn-default btn-block" type="button" id="btn-resethost">
+								        <button class="btn btn-default btn-block" title="Reconnect to the printer's USB, will reset the USB host" type="button" id="btn-resethost">
 								          GetPrinter
 								        </button>
 								      </td>
 													
 								      <td class="active">
-								        <button class="btn btn-default btn-block" type="button" id="btn-setsdio">
+								        <button class="btn btn-default btn-block" title="Set the SD card read/write protocol of Node to SDIO. After the setting is complete, please restart the printer and Node." type="button" id="btn-setsdio">
 								          SetSDIO
 								        </button>
 								      </td>
 													
 								      <td class="active">
-								        <button class="btn btn-default btn-block" type="button" id="btn-setspi">
+								        <button class="btn btn-default btn-block" title="Set the SD card read/write protocol of Node to SPI. After the setting is complete, please restart the printer and Node." type="button" id="btn-setspi">
 								          SetSPI
 								        </button>
 								      </td>
@@ -121,7 +125,8 @@
 									                    <button
 									                      class="btn btn-default btn-block"
 									                      type="button"
-									                      id="user-1"
+																				id="user-1"
+																				title="User defined button"
 									                    >
 									                      User 1
 									                    </button>
@@ -130,7 +135,8 @@
 									                    <button
 									                      class="btn btn-default btn-block"
 									                      type="button"
-									                      id="user-2"
+																				id="user-2"
+																				title="User defined button"
 									                    >
 									                      User 2
 									                    </button>
@@ -140,7 +146,8 @@
 									                    <button
 									                      class="btn btn-default btn-block"
 									                      type="button"
-									                      id="user-3"
+																				id="user-3"
+																				title="User defined button"
 									                    >
 									                     User 3
 									                    </button>
@@ -319,6 +326,8 @@
 														></progress>
 									</div>
 								</div>
+
+									
 							
 							<div class="file-b">
 							
@@ -377,18 +386,18 @@
 					              <table class="table">
 					                <tbody><tr>
 					                  <td class="active">
-					                    <button class="btn btn-default btn-block" type="button" id="update-list">
+					                    <button class="btn btn-default btn-block" type="button" id="update-list" title="Update gcode file list from the SD card">
 					                      Update Filelist
 					                    </button>
 					                  </td>
 					                  <td class="active">
-					                    <button class="btn btn-default btn-block" type="button" id="release-sd">
+					                    <button class="btn btn-default btn-block" type="button" id="release-sd" title="Unmount SD card from Node, and mount SD car to the printer at the same time">
 					                      Unmount SD
 					                    </button>
 					                  </td>
 					
 					                  <td class="active">
-					                    <button class="btn btn-default btn-block" type="button" id="get-sd">
+					                    <button class="btn btn-default btn-block" type="button" id="get-sd" title="Unmount SD card from printer, and mount SD car to the Node at the same time">
 					                      Mount SD
 					                    </button>
 					                  </td>
@@ -469,13 +478,13 @@
 									<button type="button" class="btn btn-default" id="btn-send-gcode">
 									  Send
 									</button>
-									<button type="button" class="btn btn-default" id="btn-send-clear">
+									<button type="button" class="btn btn-default" id="btn-send-clear" title="clean the log info displayed in the scroll windows.">
 									  Clear
 									</button>
-									      <a type="button" class="btn btn-default" id="btn-sel-copy" href="#">
+									      <a type="button" class="btn btn-default" id="btn-sel-copy" href="#" title="Copy and outpt the log info as a txt file">
 									  Copy
 									</a>
-									      <button type="button" class="btn btn-default" id="btn-auto-check">
+									      <button type="button" class="btn btn-default" id="btn-auto-check" title="send M115 and auto mount SD ,unmount SD to check Node's core cunction">
 									  Auto Check
 									</button>
 								</div>

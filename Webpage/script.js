@@ -87,7 +87,13 @@ function addList(parent, path, items) {
               resp.startsWith('SD') ||
               resp.startsWith('PRINTER')
             ) {
-              alert(resp);
+                if(resp.startsWith('NOT DIR')){
+                  alert("Node init SD card failed, please click 'Mount SD' and update filelist again");
+                }else if(resp.startsWith('PRINTER BUSY')){
+                  alert("Printer is printing, or not finish job normally, click 'Cancel' can get printer again.");
+                }else{
+                  alert(resp);
+                }
             }
           };
           var short_name = '/' + convertToShortName(this.className);
@@ -115,7 +121,13 @@ function addList(parent, path, items) {
               resp.startsWith('SD') ||
               resp.startsWith('PRINTER')
             ) {
-              alert(resp);
+              if(resp.startsWith('NOT DIR')){
+                alert("Node init SD card failed, please click 'Mount SD' and update filelist again");
+              }else if(resp.startsWith('PRINTER BUSY')){
+                alert("Printer is printing, or not finish job normally, click 'Cancel' can get printer again.");
+              }else{
+                alert(resp);
+              }
             }
           };
           xmlHttp.open('GET', '/remove?path=' + this.className, true);
@@ -142,7 +154,14 @@ function httpGet(parent, path) {
       resp.startsWith('SD') ||
       resp.startsWith('PRINTER')
     ) {
-      alert(resp);
+        if(resp.startsWith('NOT DIR')){
+          alert("Node init SD card failed, please click 'Mount SD' and update filelist again");
+        }else if(resp.startsWith('PRINTER BUSY')){
+          alert("Printer is printing, or not finish job normally, click 'Cancel' can get printer again.");
+        }else{
+          alert(resp);
+        }
+      
     }
   };
   xmlHttp.open('GET', '/list?dir=' + path, true);
@@ -178,7 +197,11 @@ unmountButton.onclick = () => {
       resp.startsWith('SD') ||
       resp.startsWith('PRINTER')
     ) {
-      alert(resp);
+      if(resp.startsWith('PRINTER BUSY')){
+        alert("Printer is printing, or not finish job normally, click 'Cancel' can get printer again.");
+      }else{
+        alert(resp);
+      }
     }
   };
   xmlHttp.open('GET', tt_url);
@@ -195,7 +218,13 @@ mountButton.onclick = () => {
       resp.startsWith('SD') ||
       resp.startsWith('PRINTER')
     ) {
-      alert(resp);
+      if(resp.startsWith('NOT DIR')){
+        alert("Node init SD card failed, please click 'Mount SD' and update filelist again");
+      }else if(resp.startsWith('PRINTER BUSY')){
+        alert("Printer is printing, or not finish job normally, click 'Cancel' can get printer again.");
+      }else{
+        alert(resp);
+      }
     }
   };
   xmlHttp.open('GET', tt_url);
@@ -293,7 +322,13 @@ sendGcodedButton.onclick = () => {
       resp.startsWith('SD') ||
       resp.startsWith('PRINTER')
     ) {
-      alert(resp);
+      if(resp.startsWith('NOT DIR')){
+        alert("Node init SD card failed, please click 'Mount SD' and update filelist again");
+      }else if(resp.startsWith('PRINTER BUSY')){
+        alert("Printer is printing, or not finish job normally, click 'Cancel' can get printer again.");
+      }else{
+        alert(resp);
+      }
     }
   };
   xmlHttp.open('GET', tt_url);
@@ -427,6 +462,12 @@ source.addEventListener(
 
     var reg_chip=/Start @/g
 
+    // refer marlin language.h  STR_SD_XXX
+    var reg_sd_err_init = /No SD card/g;
+    var reg_sd_err_subdir = /Cannot open subdir/g;
+    var reg_sd_err_volinit = /volume.init failed/g;
+    var reg_sd_err_root = /openRoot failed/g;
+
     var b_start = obj.match(reg_chip);
     if(b_start){
       //setTimeout for update fmd button
@@ -469,7 +510,7 @@ source.addEventListener(
       var percent = Math.round((current_line / total_lines) * 100);
       var percent_ele = document.getElementById('print-progess');
       percent_ele.innerHTML = percent.toString();
-      if(checktempture){
+	  if(checktempture){
         show_msg = false;
       }
     }
@@ -478,7 +519,7 @@ source.addEventListener(
     if (print_file) {
       var printFileElement = document.getElementById('print-file');
       printFileElement.innerHTML = RegExp.$1 + '.GCO';
-      if(checktempture){
+	  if(checktempture){
         show_msg = false;
       }
     }
@@ -487,9 +528,28 @@ source.addEventListener(
     if (print_ful_name) {
         var printFileElement = document.getElementById('print-file');
         printFileElement.innerHTML = RegExp.$2 + '.gcode';
-        if(checktempture){
-          show_msg = false;
-        }
+		if(checktempture){
+        show_msg = false;
+      }
+    }
+
+    // process SD card error
+    if(b_printing)
+    {
+      if(obj.match(reg_sd_err_init) || obj.match(reg_sd_err_subdir) ||obj.match(reg_sd_err_volinit) ||obj.match(reg_sd_err_root) )
+      {
+        alert('Printer init SD card failed! Can not start printing.');
+        var tt_url = '/operate?op=CANCLE';
+        xmlHttp = new XMLHttpRequest();
+        xmlHttp.open('GET', tt_url);
+        xmlHttp.send();
+      
+        var percent_ele = document.getElementById('print-progess');
+        var printFileElement = document.getElementById('print-file');
+        percent_ele.innerHTML = 0;
+        printFileElement.innerHTML = 'no file';
+        b_printing = false;
+      }
     }
 
     if(obj.includes("no file")){
@@ -505,7 +565,7 @@ source.addEventListener(
         var printFileElement = document.getElementById('print-file');
         percent_ele.innerHTML = 0;
         printFileElement.innerHTML = 'no file';
-        alert('Printer init SD card failed! Can not start printing.');
+       
         b_printing = false;
       }
 
