@@ -41,6 +41,8 @@ Faster and more reliable printing via Node's unique SD Card I/O bridge to printe
 
 **Node's lite web UI:**
 
+Node's webpage source code will no longer be maintained in this rpo and has been migrated here: [Node webpage](https://github.com/fiberpunk1/NodeWebPage)
+
 <div align=center>
 <img src="./Images/NodeWebUINew.png" width=800 />
 </div>
