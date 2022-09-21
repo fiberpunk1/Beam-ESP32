@@ -450,6 +450,9 @@ void printDirectory(AsyncWebServerRequest * request) {
       output += "\",\"name\":\"";
       output += entry.name();
       output += "\"";
+      output += ",\"size\":\"";
+      output += String(entry.size());
+      output += "\"";
       output += "}";
       entry.close();
     }
@@ -488,6 +491,9 @@ void printDirectory(AsyncWebServerRequest * request) {
       output += (entry.isDirectory()) ? "dir" : "file";
       output += "\",\"name\":\"";
       output += entry.name();
+      output += "\"";
+      output += ",\"size\":\"";
+      output += String(entry.size());
       output += "\"";
       output += "}";
       entry.close();
