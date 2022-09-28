@@ -51,8 +51,8 @@ This document is used to describe the API design of the Node module.
 ```
 [
     {"type":"dir","name":"/System Volume Information"},
-    {"type":"file","name":"/castle.zip"},
-    {"type":"file","name":"/config.txt"}
+    {"type":"file","name":"/castle.zip","size":"102834"},
+    {"type":"file","name":"/config.txt","size":"115340"}
 ]
 ```
 
@@ -66,6 +66,7 @@ This document is used to describe the API design of the Node module.
 |:-----:  |:-----:|-----                           |
 |type |string   |The current type of this name, file or directory|
 |name |string   |File or directory name|
+|size |string   |File size |
 
 **Remarks**
 
@@ -351,3 +352,40 @@ B: 23.4 /40  T: 100.3/210
 
 **Return Example**
 - RSSI value
+
+
+### 14. Clean Node's EEPROM
+
+**Brief description**
+
+- Clean all paramters stored in the EEPROM
+
+**Request URL**
+- ` http://192.168.1.133:88/cleaneeprom`
+
+**Request Method**
+- GET
+
+**Parameters**
+- None
+
+**Return Example**
+- ok
+
+### 15. Restart Node
+
+**Brief description**
+
+- Software reset Node
+
+**Request URL**
+- ` http://192.168.1.133:88/esprestart`
+
+**Request Method**
+- GET
+
+**Parameters**
+- None
+
+**Return Example**
+- ok
