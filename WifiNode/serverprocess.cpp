@@ -2,7 +2,7 @@
 #include "printerprocess.h"
 #include "nodeconfig.h"
 
-const char* host = "EdgeeWifi";
+const char* host = "Fiberpunk";
 void hardwareReleaseSD();
 void espGetSDCard();
 void espReleaseSD();
@@ -12,10 +12,8 @@ void sendCmdByPackageNow(String cmd);
 void cancleOrFinishPrint();
 void getFMDfile();
 
-//#define NEPTUNE 1
 
-
-extern void Write_String(int a,int b,String str);
+extern void writeString(int a,int b,String str);
 extern void writeLog(String);
 
 void notFound(AsyncWebServerRequest *request) {
@@ -26,10 +24,7 @@ void returnOK(AsyncWebServerRequest *request){
   request->send(200, "text/plain", "ok");
 }
 
-//void returnFail(String msg) 
-//{
-//  server.send(500, "text/plain", msg + "\r\n");
-//}
+
 void eventHandle(AsyncEventSourceClient *client){
       if(client->lastId()){
       Serial.printf("Client reconnected! Last message ID that it got is: %u\n", client->lastId());
@@ -593,14 +588,7 @@ void reportDevice(AsyncWebServerRequest *request)
   {
     ip = ip + ":" + "PRINTING";
   }
-//  if(!last_power_status)
-//  {
-//    reset_sd_usb = 1;
-//  }
-//  else
-//  {
-//    rst_usb = true;
-//  }
+
   request->send(200, "text/plain",ip);
 }
 void reportVersion(AsyncWebServerRequest *request)
@@ -649,25 +637,23 @@ void cancleOrFinishPrint()
     recv_ok = false;
     recvl_ok = false;
 
+
+
+  #if MB(MARLIN_VER)
     sendCmdByPackage("M524\n");
     delay(50);
     sendCmdByPackage("M118 @Stop\n");
+  #elif MB(PRUSA_VER)
+    sendCmdByPackage("M603\n");
+    espGetSDCard();
+  #endif
 
-#ifdef NEPTUNE
-    delay(50);
-    sendCmdByPackage("M25\n");
-    delay(50);
-    reset_sd_usb = 1;
-    
-#endif
     // espGetSDCard();
     sendHttpMsg(finish_cmd);
     current_bed_temp = "";
     current_layers = "";
     current_temp = "";
     
-    // if(socket_client.connected())
-    //   socket_client.stop();
 }
 
 void setSDType(AsyncWebServerRequest *request)
@@ -680,7 +666,7 @@ void setSDType(AsyncWebServerRequest *request)
   {
       AsyncWebParameter* p = request->getParam(0);
       String op = p->value();
-      Write_String(17,150,op);
+      writeString(17,150,op);
       delay(100);
       request->send(200, "text/plain","ok");
       ESP.restart(); 
@@ -702,11 +688,14 @@ void printerControl(AsyncWebServerRequest *request)
       {
           if(op=="PAUSE")
           {
-            g_status = PAUSE;
-            #ifdef NEPTUNE
-              sendCmdByPackage("M25\n");
+           
+            #if MB(MARLIN_VER)
+              sendCmdByPackage("M0\n");
+            #elif MB(PRUSA_VER)
+              sendCmdByPackage("M601\n");
             #endif
-            sendCmdByPackage("M0\n");
+            g_status = PAUSE;
+           
           }
           else if(op=="CANCLE")
           {
@@ -717,13 +706,13 @@ void printerControl(AsyncWebServerRequest *request)
             if(g_status == PAUSE)
             {
               g_status = PRINTING;
-              // PRINTER_PORT.print("G4 S1.0\n");
+              
+            #if MB(MARLIN_VER)
               sendCmdByPackage("M108\n");
-            #ifdef NEPTUNE
-              sendCmdByPackage("M24\n");
+            #elif MB(PRUSA_VER)
+              sendCmdByPackage("M602\n");
             #endif
             }
-
           }
           else if(op=="GETSD")
           {
@@ -735,10 +724,7 @@ void printerControl(AsyncWebServerRequest *request)
           }
           request->send(200, "text/plain","ok");
       }
-      // else
-      // {
-      //   request->send(500, "text/plain","NO PRINTER");
-      // }
+ 
   }
   
 
@@ -825,15 +811,15 @@ void sendGcode(AsyncWebServerRequest *request)
 void cleanEEPROM(AsyncWebServerRequest * request)
 {
   String tmp=" ";
-  Write_String(1,30,tmp); 
+  writeString(1,30,tmp); 
   delay(100);
-  Write_String(5,60,tmp);
+  writeString(5,60,tmp);
   delay(100);
-  Write_String(9,90,tmp);
+  writeString(9,90,tmp);
   delay(100);
-  Write_String(13,120,tmp);
+  writeString(13,120,tmp);
   delay(100);
-  Write_String(21,180,tmp);
+  writeString(21,180,tmp);
   request->send(200, "text/plain","ok");
 }
 void printStart(AsyncWebServerRequest * request)
@@ -870,8 +856,58 @@ void printStart(AsyncWebServerRequest * request)
   
 }
 
+#if MB(PRUSA_VER)
+  String savePaincFileName(String filename)
+  {
+    int len = filename.length();
+    filename.toLowerCase();
+    String pure_name = filename.substring(1,len-4);
+    len = pure_name.length();
+    String cmd = "D3 Ax0f95 C"+String(len);
+    String filename_hex=" X";
+    for(int i=0; i<len; i++)
+    {
+      int tmp = pure_name[i];
+      String num(tmp, HEX);
+      
+      if(i==(len-1))
+      {
+        filename_hex = filename_hex + num;
+        if(len<8)
+          filename_hex = filename_hex + "00\n";
+        else
+          filename_hex = filename_hex + "\n";
+          
+      }
+      else
+      {
+        filename_hex = filename_hex + num + " ";   
+      }
+    }
+    cmd = cmd + filename_hex;
+    return cmd;
+  }
+
+  String dirDepth(int depth)
+  {
+    String cmd = "D3 Ax3930 C1 X";
+    String depth_str(depth, HEX);
+    cmd = cmd + depth_str + "\n";
+    return cmd;
+  }
+
+  String dirsPath()
+  {
+    String cmd = "D3 Ax3850 C1 X2f\n";
+    return cmd;
+  }
+
+#endif
+
 void printStartInstance()
 {
+
+#if MB(MARLIN_VER)
   resetUsbHostInstance();
   delay(250);
   espReleaseSD();
@@ -884,12 +920,97 @@ void printStartInstance()
   saveCurrentPrintStatus("PRINTING");
   last_power_status = 1;
 
+#elif MB(PRUSA_VER)
+  resetUsbHostInstance();
+  delay(250);
+  espReleaseSD();
+  delay(200); 
+  String print_cmd = "M23 "+current_file+"\n";
+  sendCmdByPackage(print_cmd);
+  delay(200);
+  String save_panic_file = savePaincFileName(current_file);
+  sendCmdByPackage(save_panic_file);
+  writeLog("select file:"+current_file);
+  writeLog(save_panic_file);
+  delay(200);
+  sendCmdByPackage(dirDepth(1));
+  writeLog(dirDepth(1));
+  delay(200);
+  sendCmdByPackage(dirsPath());
+  writeLog(dirsPath());
+  delay(200);
+  sendCmdByPackage("M24\n");
+  g_status = PRINTING;
+  saveCurrentPrintStatus("PRINTING");
+  last_power_status = 1;
+#endif
+
 }
 
 void espRestart(AsyncWebServerRequest *request)
 {
    request->send(200, "text/plain", "ok");
    ESP.restart(); 
+}
+
+
+//for compatible octoprint API
+void octoVersion(AsyncWebServerRequest *request)
+{
+  //  {"api":"0.1","server":"1.7.3","text":"OctoPrint 1.7.3"}
+  String version_octo_api = "{\"api\":\"0.1\",\"server\":\"2.0.6\",\"text\":\"OctoPrint Node 2.0.6\"}";
+  request->send(200, "text/plain", version_octo_api);
+}
+void octoFileUpload(AsyncWebServerRequest *request, String filename, size_t index, uint8_t *t_data, size_t len, bool final){
+  filename = "/"+filename;
+  //start
+  if (!index) {
+    if(printer_sd_type==0)
+    {
+      if (SD.exists((char *)filename.c_str())) 
+      {
+        SD.remove((char *)filename.c_str());
+      }
+      uploadFile = SD.open(filename.c_str(), FILE_WRITE);
+    }
+    else if(printer_sd_type==1)
+    {
+      if (SD_MMC.exists((char *)filename.c_str())) 
+      {
+        SD_MMC.remove((char *)filename.c_str());
+      }
+      uploadFile = SD_MMC.open(filename.c_str(), FILE_WRITE);
+    }
+
+    DBG_OUTPUT_PORT.print("Upload: START, filename: "); DBG_OUTPUT_PORT.println(filename);
+  } 
+
+  //write
+  if (len) 
+  {
+    if (uploadFile) 
+    {
+      uploadFile.write(t_data, len);
+    }
+    DBG_OUTPUT_PORT.print("Upload: WRITE, Bytes: "); DBG_OUTPUT_PORT.println(len);
+  }
+
+  //finish
+  if (final)
+  {
+    if (uploadFile) 
+    {
+      uploadFile.close();
+    }
+    String logmessage = "Upload Complete: " + String(filename) + ",size: " + String(index + len);
+    DBG_OUTPUT_PORT.print(logmessage); 
+  }
+}
+
+
+void octohandleNotFound(AsyncWebServerRequest *request) 
+{  
+  request->send(200, "text/plain", "ok");
 }
 
 ServerProcess::ServerProcess()
@@ -944,9 +1065,16 @@ void ServerProcess::serverInit()
         request->send(200);
     }, handleFileUpload);
     server.onNotFound(handleNotFound);
-  server.addHandler(&events);
-  
-  server.begin();
+    server.addHandler(&events);
+    server.begin();
+
+      //for compatible octoprint API
+    octo_server.on("/api/version", HTTP_GET, octoVersion); //{"api":"0.1","server":"1.7.3","text":"OctoPrint 1.7.3"}
+    octo_server.on("/api/files", HTTP_POST, [](AsyncWebServerRequest *request) {
+        request->send(200);
+    }, octoFileUpload);
+    octo_server.onNotFound(octohandleNotFound);
+    octo_server.begin();
 
   // DBG_OUTPUT_PORT.println("HTTP server started");
 
@@ -1022,7 +1150,7 @@ void espGetSDCard()
             digitalWrite(BLUE_LED, HIGH);
 
             // DBG_OUTPUT_PORT.println("Not Found SD Card.");
-            // message_display("Not Found SD Card.");        
+            // messageDisplay("Not Found SD Card.");        
             delay(500);
             digitalWrite(RED_LED, HIGH);
             digitalWrite(GREEN_LED, HIGH);
@@ -1041,7 +1169,7 @@ void espGetSDCard()
             digitalWrite(GREEN_LED, HIGH);
             digitalWrite(BLUE_LED, HIGH);
 
-            // message_display("Not Found SD Card.");        
+            // messageDisplay("Not Found SD Card.");        
             delay(500);
             digitalWrite(RED_LED, HIGH);
             digitalWrite(GREEN_LED, HIGH);

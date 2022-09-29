@@ -1,6 +1,7 @@
 #include "nodeconfig.h"
 
 AsyncWebServer server(88);
+AsyncWebServer octo_server(80);
 AsyncEventSource events("/events");
 
 HTTPClient http_client;
@@ -42,7 +43,12 @@ bool paused_for_user = false;
 bool paused_for_filament = false;
 
 //printer sd type: 0==spi  1==sdio
-uint8_t printer_sd_type = 0;
+#if MB(MARLIN_VER)
+  uint8_t printer_sd_type = 0;
+#elif MB(PRUSA_VER)
+  uint8_t printer_sd_type = 1;
+#endif
+
 
 //last power status 0==idle  1==printing
 uint8_t last_power_status = 0;

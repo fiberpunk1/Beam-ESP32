@@ -21,7 +21,18 @@
 #include "crc8.h"
 #include "FiberPunk_SSD1306.h"
 
-#define VERSION "2022-9-21-2006-Beta"
+#define MARLIN_VER  0x01
+#define PRUSA_VER   0x02
+#define FMTYPE MARLIN_VER
+// #define FMTYPE PRUSA_VER
+#define MB(V) (V==FMTYPE)
+
+#if MB(MARLIN_VER)
+  #define VERSION "2022-9-29-2007"
+#elif MB(PRUSA_VER)
+  #define VERSION "2022-9-29-2007-PRUSA-MK3S"
+#endif
+
 #define DBG_OUTPUT_PORT Serial
 #define PRINTER_PORT Serial
 #define RED_LED 26
@@ -51,6 +62,7 @@ enum ERROR_CODE
 };
 
 extern AsyncWebServer server;
+extern AsyncWebServer octo_server;
 extern AsyncEventSource events;
 // extern HTTPClient http_client;
 extern AsyncClient socket_client;
@@ -105,7 +117,7 @@ extern void sendHttpMsg(String);
 extern void writeLog(String);
 extern void saveCurrentPrintStatus(String status_str);
 extern String getValue(String data, char separator, int index);
-extern void Write_String(int a,int b,String str);
+extern void writeString(int a,int b,String str);
 extern uint8_t lastPowerOffPrinting();
 class NodeConfig
 {

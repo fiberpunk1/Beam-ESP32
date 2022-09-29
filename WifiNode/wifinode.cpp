@@ -6,8 +6,8 @@
 #include "nodeconfig.h"
 #include "rBase64.h"
 
-void Write_String(int a,int b,String str);
-String Read_String(int, int);
+void writeString(int a,int b,String str);
+String readString(int, int);
 String getValue(String data, char separator, int index);
 void saveCurrentPrintStatus(String status_str);
 uint8_t lastPowerOffPrinting();
@@ -29,7 +29,7 @@ unsigned long interval = 30000;
 
 uint8_t lastPowerOffPrinting()
 {
-    String instore_sd_type = Read_String(EEPROM.read(21),180);
+    String instore_sd_type = readString(EEPROM.read(21),180);
     if(instore_sd_type.length()>0)
     {
       
@@ -59,7 +59,7 @@ uint8_t lastPowerOffPrinting()
 
 void saveCurrentPrintStatus(String status_str)
 {
-    Write_String(21,180,status_str);
+    writeString(21,180,status_str);
     delay(100);
 }
 
@@ -94,19 +94,20 @@ String getValue(String data, char separator, int index)
     return found > index ? data.substring(strIndex[0], strIndex[1]) : "";
 }
 
-//a写入字符串长度，b是起始位，str为要保存的字符串
-void Write_String(int a,int b,String str){
-    EEPROM.write(a, str.length());//EEPROM第a位，写入str字符串的长度
-    //把str所有数据逐个保存在EEPROM
-    for (int i = 0; i < str.length(); i++){
+
+void writeString(int a,int b,String str)
+{
+    EEPROM.write(a, str.length());
+    
+    for (int i = 0; i < str.length(); i++)
+    {
         EEPROM.write(b + i, str[i]);
     }
     EEPROM.commit();
 }
-//a位是字符串长度，b是起始位
-String Read_String(int a, int b){ 
+String readString(int a, int b)
+{ 
     String data = "";
-    //从EEPROM中逐个取出每一位的值，并链接
     for (int i = 0; i < a; i++)
     {
         data += char(EEPROM.read(b + i));
@@ -114,14 +115,14 @@ String Read_String(int a, int b){
     return data;
 }
 
-void camera_trigger()
+void cameraTrigger()
 {
   digitalWrite(19, HIGH);
   delay(8000);
   digitalWrite(19, LOW);
 }
 
-void message_display(String content)
+void messageDisplay(String content)
 {
     display.clearDisplay();
     display.display();
@@ -133,7 +134,7 @@ void message_display(String content)
   
 }
 
-void page_display(String content)
+void pageDisplay(String content)
 {
     display.clearDisplay();
     display.display();
@@ -185,7 +186,7 @@ void WifiNode::init()
     last_power_status = lastPowerOffPrinting();
 
     //default to SDIO method
-    String instore_sd_type = Read_String(EEPROM.read(17),150);
+    String instore_sd_type = readString(EEPROM.read(17),150);
     if(instore_sd_type.length()>0)
     {
       
@@ -199,16 +200,23 @@ void WifiNode::init()
         }
         else
         {
-            printer_sd_type = 1;
+            #if MB(MARLIN_VER)
+                printer_sd_type = 1;
+            #elif MB(PRUSA_VER)
+                printer_sd_type = 0;
+            #endif
         }
         
     }
     else
     {
-        printer_sd_type = 1;
+        #if MB(MARLIN_VER)
+            printer_sd_type = 1;
+        #elif MB(PRUSA_VER)
+            printer_sd_type = 0;
+        #endif
     }
     
-
 
     pinMode(5, OUTPUT);
     digitalWrite(5, LOW);
@@ -246,18 +254,17 @@ void WifiNode::init()
     display.display();
     delay(2000); // Pause for 2 seconds  
     String version = String(VERSION);
-    message_display(version); 
+    messageDisplay(version); 
     delay(2000); 
-    message_display("Checking SD Card ...");
+    messageDisplay("Checking SD Card ...");
     delay(2000);
-    //让打印机释放SD卡
     resetUsbHostInstance();
     delay(1000);
 //    sendCmdByPackageNow("G28\n");
 //    delay(1000);
     sendCmdByPackageNow("M22\n");
     delay(500);
-    //1.初始化SD
+    
     if(!last_power_status)
     {
         if(printer_sd_type==0)
@@ -271,7 +278,7 @@ void WifiNode::init()
                     digitalWrite(BLUE_LED, HIGH);
 
                     // DBG_OUTPUT_PORT.println("Not Found SD Card.");
-                    message_display("Not Found SD Card.");        
+                    messageDisplay("Not Found SD Card.");        
                     delay(500);
                     digitalWrite(RED_LED, HIGH);
                     digitalWrite(GREEN_LED, HIGH);
@@ -290,7 +297,7 @@ void WifiNode::init()
                     digitalWrite(GREEN_LED, HIGH);
                     digitalWrite(BLUE_LED, HIGH);
 
-                    message_display("Not Found SD Card.");        
+                    messageDisplay("Not Found SD Card.");        
                     delay(500);
                     digitalWrite(RED_LED, HIGH);
                     digitalWrite(GREEN_LED, HIGH);
@@ -313,7 +320,7 @@ void WifiNode::init()
     //2.初始化wifi
     uint8_t wifi_count = 0;
     initwifi:
-    message_display("Wait Connect WiFi..."); 
+    messageDisplay("Wait Connect WiFi..."); 
     delay(500);
     //读取wifi账号密码，还有打印机名字
     
@@ -345,12 +352,7 @@ void WifiNode::init()
         if(tmp_str.indexOf("pass_word")!=-1)
         {
             pw_exist = 1; 
-            cf_password = getValue(tmp_str, ':', 1);
-
-            // if(rbase64.decode(tmp_str)==RBASE64_STATUS_OK)
-            // {
-            //     cf_password = rbase64.result();
-            // }    
+            cf_password = getValue(tmp_str, ':', 1);   
         }
         //device name
         tmp_str = readConfig(config_file);
@@ -372,18 +374,18 @@ void WifiNode::init()
 	
     if (pw_exist == 1)
     {   
-        Write_String(1,30,cf_ssid);
-        cf_ssid = Read_String(EEPROM.read(1),30);
+        writeString(1,30,cf_ssid);
+        cf_ssid = readString(EEPROM.read(1),30);
         delay(100);
-        Write_String(5,60,cf_password);
-        cf_password = Read_String(EEPROM.read(5),60);
+        writeString(5,60,cf_password);
+        cf_password = readString(EEPROM.read(5),60);
         delay(100);
-        Write_String(9,90,cf_node_name);
-        cf_node_name = Read_String(EEPROM.read(9),90);
+        writeString(9,90,cf_node_name);
+        cf_node_name = readString(EEPROM.read(9),90);
         delay(100);
 
-        Write_String(13,120,b_filament);
-        b_filament = Read_String(EEPROM.read(13),120);
+        writeString(13,120,b_filament);
+        b_filament = readString(EEPROM.read(13),120);
         delay(50);
         cf_filament = b_filament.toInt();
         if(printer_sd_type==0)
@@ -393,13 +395,13 @@ void WifiNode::init()
     }
     else
     {
-        cf_ssid = Read_String(EEPROM.read(1),30);
+        cf_ssid = readString(EEPROM.read(1),30);
         delay(100);
-        cf_password = Read_String(EEPROM.read(5),60);
+        cf_password = readString(EEPROM.read(5),60);
         delay(100);
-        cf_node_name = Read_String(EEPROM.read(9),90);
+        cf_node_name = readString(EEPROM.read(9),90);
         delay(100);
-        b_filament = Read_String(EEPROM.read(13),120);
+        b_filament = readString(EEPROM.read(13),120);
         delay(100);
         cf_filament = b_filament.toInt();
     }
@@ -412,11 +414,6 @@ void WifiNode::init()
 
     WiFi.begin((const char*)cf_ssid.c_str(), (const char*)cf_password.c_str());
 
-    
-    // if(MDNS.begin(cf_node_name.c_str()))
-    // {
-    //     MDNS.addService("http", "tcp", 88);
-    // }
 
     uint8_t i = 0;
     while (WiFi.status() != WL_CONNECTED && i++ < 20) 
@@ -435,7 +432,7 @@ void WifiNode::init()
         // DBG_OUTPUT_PORT.print("Could not connect to:");
         // DBG_OUTPUT_PORT.println(cf_ssid.c_str());
         // DBG_OUTPUT_PORT.println(cf_password.c_str());
-         message_display("Connect WiFi Wrong.");
+         messageDisplay("Connect WiFi Wrong.");
         delay(500);
         if(wifi_count<4)
         {
@@ -451,11 +448,11 @@ void WifiNode::init()
     digitalWrite(BLUE_LED, HIGH);
     if(wifi_count<=3)
     {
-        page_display("Wifi Ready!");  
+        pageDisplay("Wifi Ready!");  
     }
     else
     {
-        page_display("Wifi Error!");
+        pageDisplay("Wifi Error!");
     }
     //3. server init
     serverprocesser.serverInit();
@@ -466,11 +463,7 @@ void WifiNode::init()
     delay(500);
     resetUsbHostInstance();
     PRINTER_PORT.flush();
-    // camera_trigger();
-    
-   // hardwareReleaseSD();
-   // delay(2000);
-   // espGetSDCard();
+
 }
 
 void WifiNode::process()
@@ -489,13 +482,13 @@ void WifiNode::process()
     {
         if(current_usb_status)//connected
         {
-            page_display("Printer Connected!");
+            pageDisplay("Printer Connected!");
         }
         else
         {
             String pub_msg = "offline";
             espReleaseSD();
-            page_display("Printer Not Connect!");
+            pageDisplay("Printer Not Connect!");
             writeLog(cf_node_name+":offline");
             events.send(pub_msg.c_str(), "gcode_cli");
         }

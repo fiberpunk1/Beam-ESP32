@@ -29,11 +29,11 @@ void setWifiConfigByPort(String config_str)
   }
   else if(cmd_name=="SAVE")
   {
-    Write_String(1,30,cf_ssid);
+    writeString(1,30,cf_ssid);
     delay(100);
-    Write_String(5,60,cf_password);
+    writeString(5,60,cf_password);
     delay(100);
-    Write_String(9,90,cf_node_name);
+    writeString(9,90,cf_node_name);
     delay(100);
     Serial.print("SAVE");
   }
@@ -111,7 +111,10 @@ void readPrinterBack()
       }
       else if(inData.indexOf("$f")!=-1)
       {
-        current_usb_status = 0;
+        if(g_status!=PRINTING)
+        {
+          current_usb_status = 0;
+        }
       }
 
       if(inData.indexOf("@Stop")!=-1)
@@ -158,15 +161,6 @@ void readPrinterBack()
           cancleOrFinishPrint();
          
         }
-
-        // if(inData.indexOf("no file")!=-1)
-        // {
-        //     cancleOrFinishPrint();
-        //     print_start_flag = 1;
-        // }
-
-        //Current file: (no file)
-
         
       }
       inData="";  
