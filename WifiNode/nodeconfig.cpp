@@ -21,6 +21,7 @@ String current_temp = "";
 String current_bed_temp = "";
 String pc_ipaddress = "";
 String current_file="";
+String current_upload_file = "";
 
 String user1_cmd_f_name = "user1";
 String user2_cmd_f_name = "user2";
@@ -41,6 +42,7 @@ bool hasSD = false;
 bool rst_usb = false;
 bool paused_for_user = false;
 bool paused_for_filament = false;
+bool b_print_after_upload = false;
 
 //printer sd type: 0==spi  1==sdio
 #if MB(MARLIN_VER)
@@ -62,6 +64,9 @@ uint8_t cmd_length=0;
 void sendCaptureImage(String);
 void sendHttpMsg(String);
 void writeLog(String);
+String genRandomHeader(int length);
+String renameRandom(String filename);
+String convertToShortName(String filename);
 
 void writeLog(String log_txt)
 {
@@ -93,6 +98,45 @@ void sendHttpMsg(String url)
   if(socket_client.connected())
       socket_client.write(url.c_str());
 }
+
+String genRandomHeader(int length)
+{
+    String result = "";
+    String charters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+    int chater_len = charters.length();
+    int random_in = 0;
+    for(int i=0; i<length; i++)
+    {
+        random_in = random(0,61);
+        result.concat(charters.charAt(random_in));
+    }
+    return result;
+}
+
+String renameRandom(String filename)
+{
+  filename = filename.substring(1,filename.length());
+  String header = "/"+genRandomHeader(3)+"-";
+  header = header + filename;
+  return header;
+}
+
+String convertToShortName(String filename)
+{
+    filename = filename.substring(1,filename.length()-5);
+    String base_name = "";
+    if(filename.length()>=6)
+    {
+        base_name = filename.substring(0,6) + "~1";
+    }
+    else
+    {
+        base_name = filename + "~1";
+    }
+    String full_name = "/"+base_name+".gco";
+    return full_name;
+}
+
 NodeConfig::NodeConfig()
 {
 

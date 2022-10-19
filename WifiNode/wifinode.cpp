@@ -473,8 +473,8 @@ void WifiNode::process()
     if(reset_sd_usb)
     {
         resetUsbHostInstance();
-        espReleaseSD();
-        delay(50);
+        // espReleaseSD();
+        // delay(50);
         espGetSDCard();
         reset_sd_usb = 0;
     }

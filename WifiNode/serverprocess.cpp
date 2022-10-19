@@ -1,6 +1,7 @@
 #include "serverprocess.h"
 #include "printerprocess.h"
 #include "nodeconfig.h"
+#include "ArduinoJson.h"
 
 const char* host = "Fiberpunk";
 void hardwareReleaseSD();
@@ -81,8 +82,18 @@ void handleFileUpload(AsyncWebServerRequest *request, String filename, size_t in
   if (request->url() != "/edit") {
     return;
   }
+
+  if(g_status==PRINTING){
+    request->send(500, "text/plain", "UPLOAD OPEN SF FAILED");
+    return;
+  }
+
   //start
   if (!index) {
+    espGetSDCard();
+    if(uploadFile){
+        uploadFile.close();
+    }
     if(printer_sd_type==0)
     {
       if (SD.exists((char *)filename.c_str())) 
@@ -100,14 +111,25 @@ void handleFileUpload(AsyncWebServerRequest *request, String filename, size_t in
       uploadFile = SD_MMC.open(filename.c_str(), FILE_WRITE);
     }
 
+
+
     DBG_OUTPUT_PORT.print("Upload: START, filename: "); DBG_OUTPUT_PORT.println(filename);
   } 
 
   //write
   if (len) {
     if (uploadFile) {
-      uploadFile.write(t_data, len);
+      int written_len = uploadFile.write(t_data, len);
+      if(written_len != len){
+        DBG_OUTPUT_PORT.print("Faile written: WRITE, Bytes: "); 
+        DBG_OUTPUT_PORT.println(written_len);    
+      }
     }
+    else
+    {
+       request->send(500, "text/plain", "UPLOAD OPEN SF FAILED");
+    }
+    
     DBG_OUTPUT_PORT.print("Upload: WRITE, Bytes: "); DBG_OUTPUT_PORT.println(len);
   }
 
@@ -955,16 +977,55 @@ void espRestart(AsyncWebServerRequest *request)
 
 
 //for compatible octoprint API
+void octoPrinter(AsyncWebServerRequest *request)
+{
+  String result = "{";
+  result += "\"sd\":{\"ready\": true},";
+  result += "\"state\":{\"flags\":{";
+    
+  result +="\"operational\": false,\"sdReady\": true,\"ready\": true,";
+  // result += "\"paused\":false,";
+  // result += "\"printing\":false,";
+  // result += "\"cancelling\":false,";
+  // result += "\"pausing\":false,";
+  // result += "\"error\":false,";
+  // result += "\"closedOrError\":false";
+  result += "}}}";
+
+  request->send(200, "text/json", result);
+}
 void octoVersion(AsyncWebServerRequest *request)
 {
   //  {"api":"0.1","server":"1.7.3","text":"OctoPrint 1.7.3"}
   String version_octo_api = "{\"api\":\"0.1\",\"server\":\"2.0.6\",\"text\":\"OctoPrint Node 2.0.6\"}";
   request->send(200, "text/plain", version_octo_api);
 }
-void octoFileUpload(AsyncWebServerRequest *request, String filename, size_t index, uint8_t *t_data, size_t len, bool final){
+
+void octoFileUpload(AsyncWebServerRequest *request, String filename, size_t index, uint8_t *t_data, size_t len, bool final)
+{
   filename = "/"+filename;
+  if(g_status==PRINTING)
+  {
+    request->send(500, "text/plain", "PRINTER BUSY"); 
+    return;
+  }
   //start
-  if (!index) {
+  if (!index) 
+  {
+    espGetSDCard();
+    filename = renameRandom(filename);
+    if(request->hasArg("print"))
+    {
+      DBG_OUTPUT_PORT.println("get print value");
+      AsyncWebParameter* b_print_result = request->getParam("print", true, false);
+      DBG_OUTPUT_PORT.println(b_print_result->value());
+      if(b_print_result->value()=="true")
+      {
+        b_print_after_upload = true;
+        current_upload_file = filename;
+      }
+    }
+
     if(printer_sd_type==0)
     {
       if (SD.exists((char *)filename.c_str())) 
@@ -982,7 +1043,10 @@ void octoFileUpload(AsyncWebServerRequest *request, String filename, size_t inde
       uploadFile = SD_MMC.open(filename.c_str(), FILE_WRITE);
     }
 
-    DBG_OUTPUT_PORT.print("Upload: START, filename: "); DBG_OUTPUT_PORT.println(filename);
+    // size_t headers = request->headers();
+    // DBG_OUTPUT_PORT.println(headers);
+
+    // DBG_OUTPUT_PORT.print("Upload: START, filename: "); DBG_OUTPUT_PORT.println(filename);
   } 
 
   //write
@@ -992,7 +1056,7 @@ void octoFileUpload(AsyncWebServerRequest *request, String filename, size_t inde
     {
       uploadFile.write(t_data, len);
     }
-    DBG_OUTPUT_PORT.print("Upload: WRITE, Bytes: "); DBG_OUTPUT_PORT.println(len);
+
   }
 
   //finish
@@ -1002,8 +1066,20 @@ void octoFileUpload(AsyncWebServerRequest *request, String filename, size_t inde
     {
       uploadFile.close();
     }
+    // read_header_flag = 0;
     String logmessage = "Upload Complete: " + String(filename) + ",size: " + String(index + len);
-    DBG_OUTPUT_PORT.print(logmessage); 
+    // DBG_OUTPUT_PORT.print(logmessage); 
+    if(b_print_after_upload)
+    {
+        String path = current_upload_file;
+        path.toLowerCase();
+        current_file = convertToShortName(path);
+        if((g_status==P_IDEL)&&current_usb_status)
+        {
+           print_start_flag = 1;
+        }
+        b_print_after_upload = false;
+    }
   }
 }
 
@@ -1069,6 +1145,7 @@ void ServerProcess::serverInit()
     server.begin();
 
       //for compatible octoprint API
+    octo_server.on("/api/printer", HTTP_GET, octoPrinter);
     octo_server.on("/api/version", HTTP_GET, octoVersion); //{"api":"0.1","server":"1.7.3","text":"OctoPrint 1.7.3"}
     octo_server.on("/api/files", HTTP_POST, [](AsyncWebServerRequest *request) {
         request->send(200);
@@ -1124,7 +1201,7 @@ void espReleaseSD()
     delay(50);
     
     //2.send gcode to marlin, init and reload the sd card
-    sendCmdByPackage("M21\n");
+    sendCmdByPackageNow("M21\n");
     delay(50);  
     
 }
