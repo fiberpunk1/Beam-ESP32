@@ -83,6 +83,10 @@ void handleFileUpload(AsyncWebServerRequest *request, String filename, size_t in
     return;
   }
 
+  if (!filename.startsWith("/")) {
+      filename = "/" + filename;
+  }
+
   if(g_status==PRINTING){
     request->send(500, "text/plain", "UPLOAD OPEN SF FAILED");
     return;
