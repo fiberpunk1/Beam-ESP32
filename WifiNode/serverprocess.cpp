@@ -88,6 +88,10 @@ void handleFileUpload(AsyncWebServerRequest *request, String filename, size_t in
     return;
   }
 
+  if (!filename.startsWith("/")) {
+      filename = "/" + filename;
+  }
+
   //start
   if (!index) {
     espGetSDCard();
