@@ -140,6 +140,7 @@ void handleFileUpload(AsyncWebServerRequest *request, String filename, size_t in
     }
     String logmessage = "Upload Complete: " + String(filename) + ",size: " + String(index + len);
     DBG_OUTPUT_PORT.print(logmessage); 
+    espReleaseSD();
   }
 }
 
@@ -174,30 +175,35 @@ void handlerRemove(AsyncWebServerRequest *request) {
   else{
       AsyncWebParameter* p = request->getParam(0);
       String path = p->value();
-      
+      espGetSDCard();
       if(printer_sd_type==0)
       {
         if (path == "/" || !SD.exists((char *)path.c_str())) 
         {
+          espReleaseSD();
           request->send(500, "text/plain", "BAD PATH");
           Serial.println("path not exists");
         }else
         {
           deleteRecursive(path);
           Serial.println("send ok"); 
+          espReleaseSD();
           request->send(200, "text/plain", "ok");
         }
+
       }
       else if(printer_sd_type==1)
       {
         if (path == "/" || !SD_MMC.exists((char *)path.c_str())) 
         {
+          espReleaseSD();
           request->send(500, "text/plain", "BAD PATH");
           Serial.println("path not exists");
         }else
         {
           deleteRecursive(path);
           Serial.println("send ok"); 
+          espReleaseSD();
           request->send(200, "text/plain", "ok");
         }
       }
@@ -434,7 +440,15 @@ void printDirectory(AsyncWebServerRequest * request) {
   }
   AsyncWebParameter* p = request->getParam(0);
   String path = p->value();
+  espGetSDCard();
 
+  if(last_power_status)
+  {
+      writeLog(cf_node_name+" Node init without SD");
+  }
+  else{
+    writeLog(cf_node_name+" Node init with SD");
+  }
   if(printer_sd_type==0)
   {
     if (path != "/" && !SD.exists((char *)path.c_str())) {
@@ -443,11 +457,13 @@ void printDirectory(AsyncWebServerRequest * request) {
     }
 
     writeLog(cf_node_name+"SD Type: SPI");
+    
     File dir = SD.open((char *)path.c_str());
     path = String();
     if (!dir.isDirectory()) {
       dir.close();
       request->send(500, "text/plain", "NOT DIR");
+      espReleaseSD();
       return;
     }
     dir.rewindDirectory();
@@ -476,6 +492,7 @@ void printDirectory(AsyncWebServerRequest * request) {
     output += "]";
     request->send(200, "text/json", output);
     dir.close();
+    espReleaseSD();
     return;
   }
   else if(printer_sd_type==1)
@@ -483,6 +500,7 @@ void printDirectory(AsyncWebServerRequest * request) {
     writeLog(cf_node_name+"SD Type: SDIO");
     if (path != "/" && !SD_MMC.exists((char *)path.c_str())) {
       request->send(500, "text/plain","BAD PATH");
+      espReleaseSD();
       return;
     }
     File dir = SD_MMC.open((char *)path.c_str());
@@ -490,6 +508,7 @@ void printDirectory(AsyncWebServerRequest * request) {
     if (!dir.isDirectory()) {
       dir.close();
       request->send(500, "text/plain", "NOT DIR");
+      espReleaseSD();
       return;
     }
     dir.rewindDirectory();
@@ -518,10 +537,12 @@ void printDirectory(AsyncWebServerRequest * request) {
     output += "]";
     request->send(200, "text/json", output);
     dir.close();
+    espReleaseSD();
   }
   else
   {
     writeLog(cf_node_name+"SD Type:"+String(printer_sd_type));
+    espReleaseSD();
     request->send(500, "text/plain", "NOT SD");
   }
   
@@ -651,7 +672,7 @@ void resetUSBHost(AsyncWebServerRequest *request)
 
 void cancleOrFinishPrint()
 {
-    saveCurrentPrintStatus("NONE");
+    // saveCurrentPrintStatus("NONE");
     last_power_status = 0;
     String finish_cmd = cf_node_name+":Finish";
 
@@ -692,6 +713,26 @@ void setSDType(AsyncWebServerRequest *request)
       delay(100);
       request->send(200, "text/plain","ok");
       ESP.restart(); 
+  }
+}
+
+void setInitSDBoolean(AsyncWebServerRequest *request)
+{
+  if (!request->hasArg("type")) 
+  {
+    request->send(500, "text/plain", "NO Command");
+  }
+  else
+  {
+      AsyncWebParameter* p = request->getParam(0);
+      String op = p->value();
+
+      saveCurrentPrintStatus(op);
+      espReleaseSD();
+      // writeString(17,150,op);
+      // delay(100);
+      // request->send(200, "text/plain","ok");
+      // ESP.restart(); 
   }
 }
 
@@ -939,7 +980,7 @@ void printStartInstance()
   delay(200);
   sendCmdByPackage("M24\n");
   g_status = PRINTING;
-  saveCurrentPrintStatus("PRINTING");
+  // saveCurrentPrintStatus("PRINTING");
   last_power_status = 1;
 
 #elif MB(PRUSA_VER)
@@ -963,7 +1004,7 @@ void printStartInstance()
   delay(200);
   sendCmdByPackage("M24\n");
   g_status = PRINTING;
-  saveCurrentPrintStatus("PRINTING");
+  // saveCurrentPrintStatus("PRINTING");
   last_power_status = 1;
 #endif
 
@@ -1120,6 +1161,8 @@ void ServerProcess::serverInit()
     server.on("/resetusb",HTTP_GET,resetUSBHost);
     server.on("/esprestart", HTTP_GET, espRestart);
     server.on("/setsdtype", HTTP_GET, setSDType);
+    server.on("/setsdinit", HTTP_GET, setInitSDBoolean);
+    
     server.on("/cleaneeprom", HTTP_GET, cleanEEPROM);
     server.on("/getfmdname", HTTP_GET, getFMDBtnName);
 
@@ -1168,7 +1211,7 @@ void hardwareReleaseSD()
     pinMode(15, INPUT_PULLUP);
 
     digitalWrite(18, HIGH);  
-    delay(500);  
+    delay(50);  
     if(printer_sd_type==0)
     {
       SD.end();  
@@ -1198,7 +1241,7 @@ void espReleaseSD()
     SD_MMC.end();
   }
     digitalWrite(18, HIGH);  
-    delay(50);
+    delay(10);
     
     //2.send gcode to marlin, init and reload the sd card
     sendCmdByPackageNow("M21\n");
@@ -1209,10 +1252,12 @@ void espReleaseSD()
 void espGetSDCard()
 {
     //0. release sd from marlin
+    digitalWrite(18, LOW); 
+    delay(10);
+
     sendCmdByPackageNow("M22\n");
     delay(50);
-    digitalWrite(18, LOW); 
-    delay(50);
+
     //1.初始化SD
     writeLog(cf_node_name+"SD Type:"+String(printer_sd_type));
 
@@ -1220,19 +1265,29 @@ void espGetSDCard()
     {   
         SPI.begin(14,2,15,13);
         int sd_get_count = 0;
-        while((!SD.begin(13,SPI,4000000,"/sd",5,false))&&(sd_get_count<5))
+        while((sd_get_count<5))
         {
+          if(SD.begin(13,SPI,4000000,"/sd",5,false))
+          {
+            // Serial.println("SD card init successful!");
+            break;
+          }
+          // else
+          // {
+          //   Serial.println("SD card init failed!");
+          // }
+
             digitalWrite(RED_LED, LOW);
             digitalWrite(GREEN_LED, HIGH);
             digitalWrite(BLUE_LED, HIGH);
 
             // DBG_OUTPUT_PORT.println("Not Found SD Card.");
             // messageDisplay("Not Found SD Card.");        
-            delay(500);
+            delay(20);
             digitalWrite(RED_LED, HIGH);
             digitalWrite(GREEN_LED, HIGH);
             digitalWrite(BLUE_LED, HIGH);  
-            delay(500);
+            delay(20);
             sd_get_count++;
     //        break;      
         } 
@@ -1247,11 +1302,11 @@ void espGetSDCard()
             digitalWrite(BLUE_LED, HIGH);
 
             // messageDisplay("Not Found SD Card.");        
-            delay(500);
+            delay(20);
             digitalWrite(RED_LED, HIGH);
             digitalWrite(GREEN_LED, HIGH);
             digitalWrite(BLUE_LED, HIGH);  
-            delay(500);
+            delay(20);
             sd_get_count++;
         }     
     }

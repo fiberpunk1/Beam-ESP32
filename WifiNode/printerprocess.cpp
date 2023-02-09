@@ -127,7 +127,7 @@ void readPrinterBack()
       {
         if(inData.indexOf("paused for")!=-1)
         {
-          paused_for_user = true;
+//          paused_for_user = true;
         }
 
         if(inData.indexOf("SD printing")!=-1)
@@ -146,7 +146,7 @@ void readPrinterBack()
           cancleOrFinishPrint();
           
         }
-        else if(inData.indexOf("Done")!=-1)
+        else if(inData.indexOf("Done printing")!=-1)
         {
           cancleOrFinishPrint();
           

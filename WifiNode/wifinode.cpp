@@ -185,6 +185,7 @@ void WifiNode::init()
     }
     last_power_status = lastPowerOffPrinting();
 
+
     //default to SDIO method
     String instore_sd_type = readString(EEPROM.read(17),150);
     if(instore_sd_type.length()>0)
@@ -217,7 +218,7 @@ void WifiNode::init()
         #endif
     }
     
-
+    //usb host reset
     pinMode(5, OUTPUT);
     digitalWrite(5, LOW);
 
@@ -234,6 +235,7 @@ void WifiNode::init()
     {
         digitalWrite(18, LOW);
     }
+    
     
     
     pinMode(RED_LED, OUTPUT);
@@ -256,56 +258,52 @@ void WifiNode::init()
     String version = String(VERSION);
     messageDisplay(version); 
     delay(2000); 
-    messageDisplay("Checking SD Card ...");
-    delay(2000);
+
     resetUsbHostInstance();
     delay(1000);
-//    sendCmdByPackageNow("G28\n");
-//    delay(1000);
-    sendCmdByPackageNow("M22\n");
-    delay(500);
     
     if(!last_power_status)
     {
+        messageDisplay("Checking SD Card ...");
         if(printer_sd_type==0)
+        {
+            SPI.begin(14,2,15,13);
+            int sd_get_count = 0;
+            while((!SD.begin(13,SPI,4000000,"/sd",5,false))&&(sd_get_count<5))
             {
-                SPI.begin(14,2,15,13);
-                int sd_get_count = 0;
-                while((!SD.begin(13,SPI,4000000,"/sd",5,false))&&(sd_get_count<5))
-                {
-                    digitalWrite(RED_LED, LOW);
-                    digitalWrite(GREEN_LED, HIGH);
-                    digitalWrite(BLUE_LED, HIGH);
+                digitalWrite(RED_LED, LOW);
+                digitalWrite(GREEN_LED, HIGH);
+                digitalWrite(BLUE_LED, HIGH);
 
-                    // DBG_OUTPUT_PORT.println("Not Found SD Card.");
-                    messageDisplay("Not Found SD Card.");        
-                    delay(500);
-                    digitalWrite(RED_LED, HIGH);
-                    digitalWrite(GREEN_LED, HIGH);
-                    digitalWrite(BLUE_LED, HIGH);  
-                    delay(500);
-                    sd_get_count++;
-            //        break;      
-                } 
-            }
-            else if(printer_sd_type==1)
+                // DBG_OUTPUT_PORT.println("Not Found SD Card.");
+                messageDisplay("Not Found SPI SD Card.");        
+                delay(50);
+                digitalWrite(RED_LED, HIGH);
+                digitalWrite(GREEN_LED, HIGH);
+                digitalWrite(BLUE_LED, HIGH);  
+                delay(50);
+                sd_get_count++;
+                
+            } 
+        }
+        else if(printer_sd_type==1)
+        {
+            int sd_get_count = 0;
+            while((!SD_MMC.begin())&&(sd_get_count<5))
             {
-                int sd_get_count = 0;
-                while((!SD_MMC.begin())&&(sd_get_count<5))
-                {
-                    digitalWrite(RED_LED, LOW);
-                    digitalWrite(GREEN_LED, HIGH);
-                    digitalWrite(BLUE_LED, HIGH);
+                digitalWrite(RED_LED, LOW);
+                digitalWrite(GREEN_LED, HIGH);
+                digitalWrite(BLUE_LED, HIGH);
 
-                    messageDisplay("Not Found SD Card.");        
-                    delay(500);
-                    digitalWrite(RED_LED, HIGH);
-                    digitalWrite(GREEN_LED, HIGH);
-                    digitalWrite(BLUE_LED, HIGH);  
-                    delay(500);
-                    sd_get_count++;
-                }     
-            }
+                messageDisplay("Not Found SD Card.");        
+                delay(50);
+                digitalWrite(RED_LED, HIGH);
+                digitalWrite(GREEN_LED, HIGH);
+                digitalWrite(BLUE_LED, HIGH);  
+                delay(50);
+                sd_get_count++;
+            }     
+        }
             
             digitalWrite(RED_LED, HIGH);
             digitalWrite(GREEN_LED, HIGH);
@@ -320,7 +318,7 @@ void WifiNode::init()
     //2.初始化wifi
     uint8_t wifi_count = 0;
     initwifi:
-    messageDisplay("Wait Connect WiFi..."); 
+    messageDisplay("Wait Connect WiFi."); 
     delay(500);
     //读取wifi账号密码，还有打印机名字
     
@@ -388,12 +386,12 @@ void WifiNode::init()
         b_filament = readString(EEPROM.read(13),120);
         delay(50);
         cf_filament = b_filament.toInt();
-        if(printer_sd_type==0)
-            SD.remove("/config.txt");
-        else if(printer_sd_type==1)
-            SD_MMC.remove("/config.txt");
+        // if(printer_sd_type==0)
+        //     SD.remove("/config.txt");
+        // else if(printer_sd_type==1)
+        //     SD_MMC.remove("/config.txt");
     }
-    else
+    else  //read ssid info frome eeprom directly
     {
         cf_ssid = readString(EEPROM.read(1),30);
         delay(100);
@@ -413,16 +411,25 @@ void WifiNode::init()
     WiFi.setHostname(cf_node_name.c_str());
 
     WiFi.begin((const char*)cf_ssid.c_str(), (const char*)cf_password.c_str());
+//    WiFi.begin((const char*)cf_ssid.c_str(), (const char*)cf_password.c_str(),0,0,true);
 
 
     uint8_t i = 0;
+    
     while (WiFi.status() != WL_CONNECTED && i++ < 20) 
     {
+        String point = "Wait Connect WiFi.";
         //totaly wait 10 seconds
         delay(500);
         digitalWrite(RED_LED, LOW);
         digitalWrite(GREEN_LED, HIGH);
         digitalWrite(BLUE_LED, HIGH);
+        for(int nm=0; nm<i/4; nm++)
+        {
+            point += ".";
+        }
+        if(i%4==0)
+            messageDisplay(point);
     }
     if (i == 21) 
     {
@@ -434,7 +441,7 @@ void WifiNode::init()
         // DBG_OUTPUT_PORT.println(cf_password.c_str());
          messageDisplay("Connect WiFi Wrong.");
         delay(500);
-        if(wifi_count<4)
+        if(wifi_count<3)
         {
             wifi_count++;
             goto initwifi;  
@@ -443,25 +450,32 @@ void WifiNode::init()
     }
     // DBG_OUTPUT_PORT.print("Connected! IP address: ");
     // DBG_OUTPUT_PORT.println(WiFi.localIP());
-    digitalWrite(RED_LED, HIGH);
-    digitalWrite(GREEN_LED, LOW);
-    digitalWrite(BLUE_LED, HIGH);
-    if(wifi_count<=3)
+
+    if(wifi_count<3)
     {
         pageDisplay("Wifi Ready!");  
+        digitalWrite(RED_LED, LOW);
+        digitalWrite(GREEN_LED, HIGH);
+        digitalWrite(BLUE_LED, HIGH);
     }
     else
     {
-        pageDisplay("Wifi Error!");
+        Serial.println("wifi connect failed!!");
+        messageDisplay("Wifi Error,check SD card or password!");
+        digitalWrite(RED_LED, HIGH);
+        digitalWrite(GREEN_LED, HIGH);
+        digitalWrite(BLUE_LED, HIGH);
     }
     //3. server init
     serverprocesser.serverInit();
 
     //4. crc init
     gcrc.begin();
-    getFMDfile();
+    // getFMDfile();
     delay(500);
     resetUsbHostInstance();
+    delay(100);
+    espReleaseSD();
     PRINTER_PORT.flush();
 
 }
@@ -475,7 +489,7 @@ void WifiNode::process()
         resetUsbHostInstance();
         // espReleaseSD();
         // delay(50);
-        espGetSDCard();
+        // espGetSDCard();
         reset_sd_usb = 0;
     }
     if(pre_usb_status!=current_usb_status)
@@ -487,7 +501,7 @@ void WifiNode::process()
         else
         {
             String pub_msg = "offline";
-            espReleaseSD();
+            // espReleaseSD();
             pageDisplay("Printer Not Connect!");
             writeLog(cf_node_name+":offline");
             events.send(pub_msg.c_str(), "gcode_cli");

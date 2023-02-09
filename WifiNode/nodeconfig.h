@@ -23,14 +23,14 @@
 
 #define MARLIN_VER  0x01
 #define PRUSA_VER   0x02
-// #define FMTYPE MARLIN_VER
-#define FMTYPE PRUSA_VER
+#define FMTYPE MARLIN_VER
+// #define FMTYPE PRUSA_VER
 #define MB(V) (V==FMTYPE)
 
 #if MB(MARLIN_VER)
-  #define VERSION "2022-10-19-2008"
+  #define VERSION "2023-02-02-2009"
 #elif MB(PRUSA_VER)
-  #define VERSION "2022-10-19-2008-PRUSA-MK3S"
+  #define VERSION "2023-02-02-2009-PRUSA-MK3S"
 #endif
 
 #define DBG_OUTPUT_PORT Serial
@@ -106,6 +106,7 @@ extern bool paused_for_user;
 extern bool paused_for_filament;
 extern bool b_print_after_upload;
 
+extern uint8_t b_init_with_sd;
 extern uint8_t printer_sd_type;
 extern uint8_t last_power_status;
 extern uint8_t cmd_length;

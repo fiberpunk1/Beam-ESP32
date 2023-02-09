@@ -54,10 +54,16 @@ bool b_print_after_upload = false;
 
 //last power status 0==idle  1==printing
 uint8_t last_power_status = 0;
+
+//power with sd 0=without  1=with
+uint8_t b_init_with_sd = 0;
+
 uint8_t print_start_flag = 0;
 uint8_t reset_sd_usb = 0;
+
 unsigned char current_usb_status = 0;
 unsigned char pre_usb_status = 0;
+
 
 uint8_t cmd_length=0;
 
