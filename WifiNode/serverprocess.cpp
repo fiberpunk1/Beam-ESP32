@@ -88,10 +88,6 @@ void handleFileUpload(AsyncWebServerRequest *request, String filename, size_t in
     return;
   }
 
-  if (!filename.startsWith("/")) {
-      filename = "/" + filename;
-  }
-
   //start
   if (!index) {
     espGetSDCard();
@@ -444,112 +440,124 @@ void printDirectory(AsyncWebServerRequest * request) {
   }
   AsyncWebParameter* p = request->getParam(0);
   String path = p->value();
-  espGetSDCard();
 
-  if(last_power_status)
+  if(g_status==PRINTING)
   {
-      writeLog(cf_node_name+" Node init without SD");
-  }
-  else{
-    writeLog(cf_node_name+" Node init with SD");
-  }
-  if(printer_sd_type==0)
-  {
-    if (path != "/" && !SD.exists((char *)path.c_str())) {
-      request->send(500, "text/plain","BAD PATH");
-      return;
-    }
-
-    writeLog(cf_node_name+"SD Type: SPI");
-    
-    File dir = SD.open((char *)path.c_str());
-    path = String();
-    if (!dir.isDirectory()) {
-      dir.close();
-      request->send(500, "text/plain", "NOT DIR");
-      espReleaseSD();
-      return;
-    }
-    dir.rewindDirectory();
-    
-
-    String output = "[";
-    for (int cnt = 0; true; ++cnt) {
-      File entry = dir.openNextFile();
-      if (!entry) {
-        break;
-      }
-      if (cnt > 0) {
-        output += ',';
-      }
-      output += "{\"type\":\"";
-      output += (entry.isDirectory()) ? "dir" : "file";
-      output += "\",\"name\":\"";
-      output += entry.name();
-      output += "\"";
-      output += ",\"size\":\"";
-      output += String(entry.size());
-      output += "\"";
-      output += "}";
-      entry.close();
-    }
-    output += "]";
-    request->send(200, "text/json", output);
-    dir.close();
-    espReleaseSD();
+    request->send(500, "text/plain","PRINTER BUSY");
     return;
   }
-  else if(printer_sd_type==1)
-  {
-    writeLog(cf_node_name+"SD Type: SDIO");
-    if (path != "/" && !SD_MMC.exists((char *)path.c_str())) {
-      request->send(500, "text/plain","BAD PATH");
-      espReleaseSD();
-      return;
-    }
-    File dir = SD_MMC.open((char *)path.c_str());
-       path = String();
-    if (!dir.isDirectory()) {
-      dir.close();
-      request->send(500, "text/plain", "NOT DIR");
-      espReleaseSD();
-      return;
-    }
-    dir.rewindDirectory();
-    
 
-    String output = "[";
-    for (int cnt = 0; true; ++cnt) {
-      File entry = dir.openNextFile();
-      if (!entry) {
-        break;
-      }
-      if (cnt > 0) {
-        output += ',';
-      }
-      output += "{\"type\":\"";
-      output += (entry.isDirectory()) ? "dir" : "file";
-      output += "\",\"name\":\"";
-      output += entry.name();
-      output += "\"";
-      output += ",\"size\":\"";
-      output += String(entry.size());
-      output += "\"";
-      output += "}";
-      entry.close();
-    }
-    output += "]";
-    request->send(200, "text/json", output);
-    dir.close();
-    espReleaseSD();
-  }
-  else
+
   {
-    writeLog(cf_node_name+"SD Type:"+String(printer_sd_type));
-    espReleaseSD();
-    request->send(500, "text/plain", "NOT SD");
-  }
+    espGetSDCard();
+
+      if(last_power_status)
+      {
+          writeLog(cf_node_name+" Node init without SD");
+      }
+      else{
+        writeLog(cf_node_name+" Node init with SD");
+      }
+      if(printer_sd_type==0)
+      {
+        if (path != "/" && !SD.exists((char *)path.c_str())) {
+          request->send(500, "text/plain","BAD PATH");
+          return;
+        }
+
+        writeLog(cf_node_name+"SD Type: SPI");
+        
+        File dir = SD.open((char *)path.c_str());
+        path = String();
+        if (!dir.isDirectory()) {
+          dir.close();
+          request->send(500, "text/plain", "NOT DIR");
+          espReleaseSD();
+          return;
+        }
+        dir.rewindDirectory();
+        
+
+        String output = "[";
+        for (int cnt = 0; true; ++cnt) {
+          File entry = dir.openNextFile();
+          if (!entry) {
+            break;
+          }
+          if (cnt > 0) {
+            output += ',';
+          }
+          output += "{\"type\":\"";
+          output += (entry.isDirectory()) ? "dir" : "file";
+          output += "\",\"name\":\"";
+          output += entry.name();
+          output += "\"";
+          output += ",\"size\":\"";
+          output += String(entry.size());
+          output += "\"";
+          output += "}";
+          entry.close();
+        }
+        output += "]";
+        request->send(200, "text/json", output);
+        dir.close();
+        espReleaseSD();
+        return;
+      }
+      else if(printer_sd_type==1)
+      {
+        writeLog(cf_node_name+"SD Type: SDIO");
+        if (path != "/" && !SD_MMC.exists((char *)path.c_str())) {
+          request->send(500, "text/plain","BAD PATH");
+          espReleaseSD();
+          return;
+        }
+        File dir = SD_MMC.open((char *)path.c_str());
+          path = String();
+        if (!dir.isDirectory()) {
+          dir.close();
+          request->send(500, "text/plain", "NOT DIR");
+          espReleaseSD();
+          return;
+        }
+        dir.rewindDirectory();
+        
+
+        String output = "[";
+        for (int cnt = 0; true; ++cnt) {
+          File entry = dir.openNextFile();
+          if (!entry) {
+            break;
+          }
+          if (cnt > 0) {
+            output += ',';
+          }
+          output += "{\"type\":\"";
+          output += (entry.isDirectory()) ? "dir" : "file";
+          output += "\",\"name\":\"";
+          output += entry.name();
+          output += "\"";
+          output += ",\"size\":\"";
+          output += String(entry.size());
+          output += "\"";
+          output += "}";
+          entry.close();
+        }
+        output += "]";
+        request->send(200, "text/json", output);
+        dir.close();
+        espReleaseSD();
+      }
+      else
+      {
+        writeLog(cf_node_name+"SD Type:"+String(printer_sd_type));
+        espReleaseSD();
+        request->send(500, "text/plain", "NOT SD");
+      }
   
+  }
+
+ 
 
 
 }
@@ -1125,6 +1133,7 @@ void octoFileUpload(AsyncWebServerRequest *request, String filename, size_t inde
         }
         b_print_after_upload = false;
     }
+    espReleaseSD();
   }
 }
 

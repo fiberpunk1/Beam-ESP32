@@ -23,8 +23,8 @@
 
 #define MARLIN_VER  0x01
 #define PRUSA_VER   0x02
-#define FMTYPE MARLIN_VER
-// #define FMTYPE PRUSA_VER
+// #define FMTYPE MARLIN_VER
+#define FMTYPE PRUSA_VER
 #define MB(V) (V==FMTYPE)
 
 #if MB(MARLIN_VER)

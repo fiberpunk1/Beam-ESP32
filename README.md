@@ -66,7 +66,7 @@ We want to challenge ourselves to see if there is a leaner, MCU based solution t
 - Robust operation such that the device can be powered off immediately and does not rely on an Internet connection to function
 
 <div align=center>
-<img src="./Images/board-2.jpg" width=600 />
+<img src="./Images/NodePro.jpg" width=600 />
 </div>
 
 To meet the above goals, we needed a tightly integrated solution that requires hardware that does not exist on the market. This led us to develop Node’s ESP32 based board and the open-source firmware.  We also designed the unique SD Bridge that allows Node to transfer GCode via high-speed SD I/O while controlling/monitoring via the serial connection.
@@ -82,7 +82,28 @@ Please refer this [guide](https://docs.google.com/document/d/1nrXws8Kn6kyR-FUqMd
 
 Please refer to this [guide](https://docs.google.com/presentation/d/1EhdrxVowPHj--iUrkvdkC4d59uzsc6_Up4gLxd3CpAw/edit?usp=sharing) to complete the firmware burning and updating. 
 
-## 5. Community support
+## 5. Expansion port description
+
+![Node](./Images/NodeProPin.jpg)
+
+example:
+```c++
+//Node Pro Expansion Uart(RXD2 TXD2)
+Serial2.begin(9600);
+Serial2.println("fiberpunk");
+
+//Node Pro Expansion GPIO
+pinMode(19, INPUT);
+pinMode(23, INPUT);
+
+if(digitalRead(19)==HIGH)
+{
+  Serial2.println("Filament Out");
+}
+
+```
+
+## 6. Community support
 
 - Email: contact@fiber-punk.com
 - [Website](https://fiber-punk.com/)
