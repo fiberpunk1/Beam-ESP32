@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Fiberpunk WiFi Configuration</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style type="text/css">
+        body {
+            background-color: #f2f2f2;
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+        h1 {
+            font-size: 28px;
+            font-weight: bold;
+            margin: 20px;
+            text-align: center;
+        }
+        form {
+            background-color: #ffffff;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+            margin: 20px auto;
+            max-width: 500px;
+            padding: 20px;
+        }
+        label {
+            display: block;
+            font-size: 16px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        select, input[type="password"] {
+            border: 1px solid #cccccc;
+            border-radius: 3px;
+            box-sizing: border-box;
+            font-size: 16px;
+            margin-bottom: 20px;
+            padding: 10px;
+            width: 100%;
+        }
+
+        select, input[type="devicename"] {
+            border: 1px solid #cccccc;
+            border-radius: 3px;
+            box-sizing: border-box;
+            font-size: 16px;
+            margin-bottom: 20px;
+            padding: 10px;
+            width: 100%;
+        }
+
+        input[type="submit"], input[type="button"] {
+            background-color: #4CAF50;
+            border: none;
+            border-radius: 3px;
+            color: #ffffff;
+            cursor: pointer;
+            font-size: 16px;
+            margin-top: 20px;
+            padding: 10px;
+            width: 100%;
+            transition: background-color 0.3s ease;
+        }
+        input[type="submit"]:hover, input[type="button"]:hover {
+            background-color: #3e8e41;
+        }
+
+        .loading {
+			border: 16px solid #f3f3f3; /* Light grey */
+			border-top: 16px solid #3498db; /* Blue */
+			border-radius: 50%;
+			width: 120px;
+			height: 120px;
+			animation: spin 2s linear infinite;
+			margin: auto;
+			margin-top: 50px;
+		}
+
+		@keyframes spin {
+			0% { transform: rotate(0deg); }
+			100% { transform: rotate(360deg); }
+		}
+
+        .refresh-button {
+            background-color: #008CBA;
+            margin-top: 0;
+            margin-bottom: 10px;
+        }
+        .refresh-button:hover {
+            background-color: #006A87;
+        }
+    </style>
+</head>
+<body>
+    <h1>Fiberpunk WiFi Configuration</h1>
+    <form method="post" action="/connect">
+        <label for="devicename">Device Name:</label>
+        <input type="devicename" id="devicename" name="devicename" required>
+
+        <label for="ssid">WiFi SSID:</label>
+        <select id="ssid" name="ssid" required>
+            <option value="">--Select SSID--</option>
+        </select>
+        <label for="password">WiFi Password:</label>
+        <input type="password" id="password" name="password" required>
+        <input type="button" class="refresh-button" value="Refresh WiFi List" onclick="getWiFiList()">
+        <div id="loading" class="loading" style="display:none;"></div>
+        <input type="submit" value="Connect">
+    </form>
+    <script>
+function getWiFiList() {
+  var xhr = new XMLHttpRequest();
+  xhr.onreadystatechange = function() {
+    document.getElementById("loading").style.display = "block";
+    if (this.readyState == 4 && this.status == 200) {
+      var ssids = JSON.parse(this.responseText);
+      var select = document.getElementById("ssid");
+      select.innerHTML = "";
+      var option = document.createElement("option");
+      option.text = "--Select SSID--";
+      select.add(option);
+      for (var i = 0; i < ssids.length; i++) {
+        var option = document.createElement("option");
+        option.text = ssids[i].ssid;
+        select.add(option);
+      }
+      document.getElementById("loading").style.display = "none";
+      alert("WiFi Update finish, please chose wifi ssid.");
+    }
+  };
+  xhr.open("GET", "/wifi-list", true);
+  xhr.send();
+}
+    </script>
+</body>
+</html>

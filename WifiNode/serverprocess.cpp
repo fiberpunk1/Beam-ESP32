@@ -3,6 +3,8 @@
 #include "nodeconfig.h"
 #include "ArduinoJson.h"
 
+#include "apconfig.h"
+
 const char* host = "Fiberpunk";
 void hardwareReleaseSD();
 void espGetSDCard();
@@ -14,6 +16,7 @@ void cancleOrFinishPrint();
 void getFMDfile();
 
 
+extern void pageDisplayIP(String ip,String content);
 extern void writeString(int a,int b,String str);
 extern void writeLog(String);
 
@@ -1331,20 +1334,200 @@ void espGetSDCard()
 
 void filamentDetect()
 {
-  if((cf_filament==1)&&((!paused_for_filament)))
+  // if((cf_filament==1)&&((!paused_for_filament)))
+  // {
+  //   if(digitalRead(19)==HIGH)
+  //   {
+  //     delay(100);
+  //     if(digitalRead(19)==HIGH)  
+  //     {
+  //       sendCmdByPackage("M600 X0 Y0\n");
+  //       String filament_cmd = cf_node_name+"-FilamentOut";
+  //       sendHttpMsg(filament_cmd);
+  //       paused_for_filament = true;
+  //     }
+  //   }  
+  // }  
+}
+
+
+void checkLEDstatus()
+{
+  if(g_led_status==LED_RED)
   {
-    if(digitalRead(19)==HIGH)
+      digitalWrite(RED_LED, LOW);
+      digitalWrite(GREEN_LED, HIGH);
+      digitalWrite(BLUE_LED, HIGH);
+  }
+  else if(g_led_status==LED_GREEN)
+  {
+      digitalWrite(RED_LED, HIGH);
+      digitalWrite(GREEN_LED, LOW);
+      digitalWrite(BLUE_LED, HIGH);
+  }
+  else if(g_led_status==LED_BLUE)
+  {
+      digitalWrite(RED_LED, HIGH);
+      digitalWrite(GREEN_LED, HIGH);
+      digitalWrite(BLUE_LED, LOW);
+  }
+  else if(g_led_status==LED_YELLOW)
+  {
+      digitalWrite(RED_LED, HIGH);
+      digitalWrite(GREEN_LED, LOW);
+      digitalWrite(BLUE_LED, LOW);
+  }
+  else if(g_led_status==LED_WHITE)
+  {
+      digitalWrite(RED_LED, LOW);
+      digitalWrite(GREEN_LED, LOW);
+      digitalWrite(BLUE_LED, LOW);
+  }
+
+}
+
+
+void apHandleNotFound()
+{
+  String message = "SDCARD Not Detected\n\n";
+  message += "URI: ";
+  message += config_wifi_server.uri();
+  message += "\nMethod: ";
+  message += (config_wifi_server.method() == HTTP_GET) ? "GET" : "POST";
+  message += "\nArguments: ";
+  message += config_wifi_server.args();
+  message += "\n";
+  for (uint8_t i = 0; i < config_wifi_server.args(); i++) {
+    message += " NAME:" + config_wifi_server.argName(i) + "\n VALUE:" + config_wifi_server.arg(i) + "\n";
+  }
+  config_wifi_server.send(404, "text/plain", message);
+}
+
+void apHandleWiFiList() 
+{
+  String wifiList = "[";
+
+  int numNetworks = WiFi.scanNetworks();
+  for (int i = 0; i < numNetworks; i++) {
+    if (i > 0) {
+      wifiList += ",";
+    }
+    wifiList += "{\"ssid\":\"" + WiFi.SSID(i) + "\",\"rssi\":" + WiFi.RSSI(i) + "}";
+    Serial.print("Wifi ssid:");
+    Serial.println(WiFi.SSID(i));
+  }
+
+  wifiList += "]";
+  config_wifi_server.send(200, "application/json", wifiList);
+}
+void apHandleRoot() 
+{
+  Serial.println("in the config index page");
+  config_wifi_server.send(200, "text/html", wifi_config_string);
+}
+
+void apHandleConfig() {
+  if (config_wifi_server.method() == HTTP_POST) {
+    String device_name  = config_wifi_server.arg("devicename");
+    String ssid = config_wifi_server.arg("ssid");
+    String password = config_wifi_server.arg("password");
+    WiFi.softAPdisconnect(true); // 断开AP模式
+    WiFi.mode(WIFI_MODE_STA); // 切换到STA模式
+    WiFi.begin(ssid.c_str(), password.c_str());
+    int i=0;
+    while (WiFi.status() != WL_CONNECTED && i++ < 20) 
     {
-      delay(100);
-      if(digitalRead(19)==HIGH)  
+        digitalWrite(RED_LED, HIGH);
+        digitalWrite(GREEN_LED, HIGH);
+        digitalWrite(BLUE_LED, HIGH);
+
+        delay(500);
+        digitalWrite(RED_LED, LOW);
+        digitalWrite(GREEN_LED, HIGH);
+        digitalWrite(BLUE_LED, HIGH);
+        delay(500);
+    }
+    if (i == 21) 
+    {
+        Serial.print("connect failed!");
+        digitalWrite(RED_LED, LOW);
+        digitalWrite(GREEN_LED, HIGH);
+        digitalWrite(BLUE_LED, HIGH);
+        delay(3000);
+        g_led_status = LED_WHITE;
+
+    }
+    else{
+        g_led_status = LED_GREEN;
+        g_status = P_IDEL;
+        //保存密码到eeprom
+        writeString(1,30,ssid);
+        cf_ssid = ssid;
+        delay(100);
+        writeString(5,60,password);
+        cf_password = password;
+        delay(100);
+        writeString(9,90,device_name);
+        cf_node_name = device_name;
+        delay(100);
+        Serial.print("connect successful!");
+
+        String ip = "Beam-Holo:" + WiFi.localIP().toString();
+        Serial.print(ip);
+        pageDisplayIP(WiFi.localIP().toString(), "Please reboot Node Max");
+
+        config_wifi_server.close();
+        octo_server.begin();
+        
+        digitalWrite(RED_LED, HIGH);
+        digitalWrite(GREEN_LED, LOW);
+        digitalWrite(BLUE_LED, HIGH);
+        
+    }
+    // config_wifi_server.send(200, "text/html", "<html><body><h1>WiFi Configuration</h1><p>Connecting to WiFi network...</p></body></html>");
+
+    
+  } else {
+    config_wifi_server.send(200, "text/html", "<html><body><form method=\"post\" action=\"/config\"><label for=\"ssid\">WiFi SSID:</label><input type=\"text\" id=\"ssid\" name=\"ssid\" required><label for=\"password\">WiFi Password:</label><input type=\"password\" id=\"password\" name=\"password\" required><input type=\"submit\" value=\"Connect\"></form></body></html>");
+  }
+}
+void wifi_config_mode_init()
+{
+  
+  WiFi.disconnect();
+  delay(100);
+  WiFi.setTxPower(WIFI_POWER_5dBm);
+  WiFi.mode(WIFI_MODE_AP); 
+  WiFi.softAP("NodeMax_ap", "fiberpunk");
+  // IPAddress Ip(192, 168, 88, 88);    //setto IP Access Point same as gateway
+  // IPAddress NMask(255, 255, 255, 0);
+  // WiFi.softAPConfig(Ip, Ip, NMask);
+  // octo_server.reset();
+  octo_server.end();
+  
+
+  config_wifi_server.on("/", HTTP_GET,apHandleRoot);
+  config_wifi_server.on("/wifi-list", HTTP_GET,apHandleWiFiList);
+  config_wifi_server.on("/connect", apHandleConfig);
+  config_wifi_server.onNotFound(apHandleNotFound);
+  config_wifi_server.begin(80);
+  pageDisplayIP("192.168.4.1","AP Mode Ready");
+
+}
+
+
+void apModeDetect()
+{
+    if(digitalRead(23)==LOW)
+    {
+      delay(500);
+      if(digitalRead(23)==LOW)
       {
-        sendCmdByPackage("M600 X0 Y0\n");
-        String filament_cmd = cf_node_name+"-FilamentOut";
-        sendHttpMsg(filament_cmd);
-        paused_for_filament = true;
-      }
-    }  
-  }  
+        writeLog("AP mode pressed");
+        g_status=AP_MODE;
+        wifi_config_mode_init();
+      } 
+    } 
 }
 
 
@@ -1361,18 +1544,21 @@ void ServerProcess::serverLoop()
       print_start_flag = 0;
       printStartInstance();
     }
+    apModeDetect();
+    checkLEDstatus();
     if (g_status==PRINTING)
     {
-      digitalWrite(RED_LED, HIGH);
-      digitalWrite(GREEN_LED, HIGH);
-      digitalWrite(BLUE_LED, LOW);
+      g_led_status = LED_BLUE;
       filamentDetect();
+    }
+    else if(g_status==AP_MODE)
+    {
+      g_led_status = LED_WHITE;
+      config_wifi_server.handleClient();
     }
     else
     {
-      digitalWrite(RED_LED, HIGH);
-      digitalWrite(GREEN_LED, LOW);
-      digitalWrite(BLUE_LED, HIGH);
+      g_led_status = LED_GREEN;
 
     }
     if(paused_for_user&&(!paused_for_filament))

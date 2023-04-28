@@ -23,14 +23,14 @@
 
 #define MARLIN_VER  0x01
 #define PRUSA_VER   0x02
-// #define FMTYPE MARLIN_VER
-#define FMTYPE PRUSA_VER
+#define FMTYPE MARLIN_VER
+// #define FMTYPE PRUSA_VER
 #define MB(V) (V==FMTYPE)
 
 #if MB(MARLIN_VER)
-  #define VERSION "2023-02-02-2009"
+  #define VERSION "2023-04-20-2010-beta-0.1"
 #elif MB(PRUSA_VER)
-  #define VERSION "2023-02-02-2009-PRUSA-MK3S"
+  #define VERSION "2023-04-20-2010-PRUSA-MK3S-beta-0.2"
 #endif
 
 #define DBG_OUTPUT_PORT Serial
@@ -53,6 +53,17 @@ enum OP_STATUS
   RECOVER=3,
   CANCLE=4,
   HEEATING=5,
+  AP_MODE=6,
+};
+
+enum LED_STATUS
+{
+  LED_RED=0, 
+  LED_GREEN=1,
+  LED_BLUE=2,
+  LED_WHITE=3,
+  LED_YELLOW=4,
+  LED_ORANGE=5,
 };
 
 enum ERROR_CODE
@@ -63,6 +74,7 @@ enum ERROR_CODE
 
 extern AsyncWebServer server;
 extern AsyncWebServer octo_server;
+extern WebServer config_wifi_server;
 extern AsyncEventSource events;
 // extern HTTPClient http_client;
 extern AsyncClient socket_client;
@@ -82,6 +94,7 @@ extern String pc_ipaddress;
 extern String current_file;
 extern String current_upload_file;
 extern OP_STATUS g_status;
+extern LED_STATUS g_led_status;
 extern ERROR_CODE g_error;
 
 

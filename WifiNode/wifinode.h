@@ -10,6 +10,7 @@ public:
     void init();
     void process();
     void checkwifi();
+    void setHeaderTitil();
 
 private:
     ServerProcess serverprocesser;

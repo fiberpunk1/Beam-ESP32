@@ -47,6 +47,12 @@ Node's webpage source code will no longer be maintained in this rpo and has been
 <img src="./Images/NodeWebUINew.png" width=800 />
 </div>
 
+**Node's AP Mode Config wifi UI:**
+<div align=center>
+<img src="./Images/AP-mode.jpg" width=500 />
+</div>
+
+
 **Node installed in Ender3-v2:**
 
 <div align=center>

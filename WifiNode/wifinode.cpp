@@ -11,6 +11,8 @@ String readString(int, int);
 String getValue(String data, char separator, int index);
 void saveCurrentPrintStatus(String status_str);
 uint8_t lastPowerOffPrinting();
+void pageDisplayIP(String ip,String content);
+
 
 extern void hardwareReleaseSD();
 extern void getFMDfile();
@@ -133,7 +135,20 @@ void messageDisplay(String content)
     display.display(); // actually display all of the above  
   
 }
-
+void pageDisplayIP(String ip,String content)
+{
+    display.clearDisplay();
+    display.display();
+    display.setTextSize(1);
+    display.setCursor(0,0);
+    display.print("Name:");
+    display.println(cf_node_name);
+    display.print("IP:");
+    display.println(ip);
+    display.println(content);
+    display.display(); // actually display all of the above 
+    
+}
 void pageDisplay(String content)
 {
     display.clearDisplay();
@@ -141,6 +156,8 @@ void pageDisplay(String content)
     display.setTextSize(1);
     display.setCursor(0,0);
     display.print("Name:");
+    // Serial.println("cf_node_name:");
+    // Serial.println(cf_node_name);
     display.println(cf_node_name);
     display.print("IP:");
     display.println(WiFi.localIP());
@@ -163,6 +180,64 @@ void WifiNode::checkwifi()
         WiFi.disconnect();
         WiFi.reconnect();
         previousMillis = currentMillis;
+    }
+}
+
+void WifiNode::setHeaderTitil()
+{
+    File file = SPIFFS.open("/index.htm", FILE_READ);
+    if (!file) 
+    {
+        Serial.println("Failed to open file for reading");
+        return;
+    }
+    String line;
+    int lineCount = 0;
+    bool titleFound = false;
+    while (file.available() && lineCount < 5) 
+    {
+        line = file.readStringUntil('\n');
+        lineCount++;
+        if (line.indexOf("<title>") >= 0) 
+        {
+            titleFound = true;
+            break;
+        }
+    }
+    file.close();
+
+    //if the title no exist
+    if (!titleFound) 
+    {
+        file = SPIFFS.open("/index.htm", FILE_READ);
+        if (!file) 
+        {
+            Serial.println("Failed to open file for reading");
+            return;
+        }
+        String newFileContent = "<title>"+cf_node_name+"</title>\n";
+        while (file.available()) 
+        {
+            line = file.readStringUntil('\n');
+            newFileContent += line + "\n";
+        }
+        file.close();
+
+        file = SPIFFS.open("/index.htm", FILE_WRITE);
+        if (!file) 
+        {
+            Serial.println("Failed to open file for writing");
+            return;
+        }
+        if (file.print(newFileContent)) 
+        {
+            Serial.println("File written");
+        } 
+        else 
+        {
+            Serial.println("Write failed");
+        }
+        file.close();
     }
 }
 
@@ -223,8 +298,12 @@ void WifiNode::init()
     digitalWrite(5, LOW);
 
     //faliment detector
-    pinMode(19, INPUT);
+    pinMode(19, INPUT_PULLUP);
     pinMode(18, OUTPUT);
+
+    //ap mode pin
+    pinMode(23, INPUT_PULLUP);
+    
 
     //SD switcher
     if(last_power_status)
@@ -390,6 +469,11 @@ void WifiNode::init()
         //     SD.remove("/config.txt");
         // else if(printer_sd_type==1)
         //     SD_MMC.remove("/config.txt");
+
+        if(cf_node_name.length()>32)
+        {
+            cf_node_name = "Node Max";
+        }
     }
     else  //read ssid info frome eeprom directly
     {
@@ -402,13 +486,20 @@ void WifiNode::init()
         b_filament = readString(EEPROM.read(13),120);
         delay(100);
         cf_filament = b_filament.toInt();
+
+        if(cf_node_name.length()>32)
+        {
+            cf_node_name = "Node Max";
+        }
     }
+
+    setHeaderTitil();
     
     WiFi.mode(WIFI_STA);
 
     WiFi.persistent(false); 
     WiFi.setAutoConnect(false);
-    WiFi.setHostname(cf_node_name.c_str());
+    // WiFi.setHostname(cf_node_name.c_str());
 
     WiFi.begin((const char*)cf_ssid.c_str(), (const char*)cf_password.c_str());
 //    WiFi.begin((const char*)cf_ssid.c_str(), (const char*)cf_password.c_str(),0,0,true);
@@ -460,7 +551,7 @@ void WifiNode::init()
     }
     else
     {
-        Serial.println("wifi connect failed!!");
+        // Serial.println("wifi connect failed!!");
         messageDisplay("Wifi Error,check SD card or password!");
         digitalWrite(RED_LED, HIGH);
         digitalWrite(GREEN_LED, HIGH);

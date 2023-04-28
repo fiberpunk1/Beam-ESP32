@@ -2,6 +2,7 @@
 
 AsyncWebServer server(88);
 AsyncWebServer octo_server(80);
+WebServer config_wifi_server(81);
 AsyncEventSource events("/events");
 
 HTTPClient http_client;
@@ -32,7 +33,7 @@ String user2_cmd = "";
 String user3_cmd = "";
 String user4_cmd = "";
 
-
+LED_STATUS g_led_status=LED_RED;
 OP_STATUS g_status=P_IDEL;
 ERROR_CODE g_error=NORMAL;
 
